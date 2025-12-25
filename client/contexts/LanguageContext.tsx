@@ -24,7 +24,7 @@ const translations: Record<string, string> = {
   newSale: "فروش جدید",
   editSale: "ویرایش فروش",
   totalPatients: "کل بیماران",
-  bottlesSold: "واحد فروخته شده",
+  bottlesSold: "بطری فروخته شده",
   unitsSold: "فروخته شده",
   totalSales: "کل فروش",
   debtBalance: "مانده بدهی",
