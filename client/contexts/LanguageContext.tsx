@@ -224,6 +224,14 @@ const translations: Record<string, string> = {
   newSaleAdded: "فروش جدید",
   newInstallmentAdded: "قسط جدید",
   dataRestored: "داده‌ها بازیابی شد",
+  installmentsStatus: "وضعیت اقساط",
+  installmentNumber: "قسط",
+  paidInstallment: "پرداخت شده",
+  unpaidInstallment: "پرداخت نشده",
+  installmentDueDate: "سررسید",
+  allInstallmentsPaid: "همه اقساط پرداخت شده",
+  paidCount: "پرداخت شده",
+  remainingCount: "باقی‌مانده",
 };
 
 if (!I18nManager.isRTL) {
