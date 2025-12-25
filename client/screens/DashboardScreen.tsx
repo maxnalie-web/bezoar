@@ -3,10 +3,8 @@ import { View, StyleSheet, ScrollView, Pressable, RefreshControl } from "react-n
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation, DrawerActions } from "@react-navigation/native";
-import { Image } from "expo-image";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
-
-import AppIcon from "@assets/images/icon.png";
+import { BorderRadius } from "@/constants/theme";
 import { ThemedText } from "@/components/ThemedText";
 import { StatCard } from "@/components/StatCard";
 import { GlassCard } from "@/components/GlassCard";
@@ -134,11 +132,9 @@ export default function DashboardScreen() {
           <Feather name="menu" size={24} color={theme.text} />
         </Pressable>
         <View style={[styles.headerTitle, styles.headerTitleRTL]}>
-          <Image
-            source={AppIcon}
-            style={[styles.headerLogo, styles.headerLogoRTL]}
-            contentFit="contain"
-          />
+          <View style={[styles.headerLogoIcon, styles.headerLogoRTL, { backgroundColor: theme.accent + "20" }]}>
+            <Feather name="activity" size={20} color={theme.accent} />
+          </View>
           <ThemedText type="h3">{t("appName")}</ThemedText>
         </View>
         <View style={styles.menuButton} />
@@ -310,6 +306,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     marginRight: Spacing.sm,
+  },
+  headerLogoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.sm,
+    alignItems: "center",
+    justifyContent: "center",
   },
   headerLogoRTL: {
     marginRight: 0,
