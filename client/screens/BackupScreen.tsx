@@ -3,9 +3,7 @@ import { View, StyleSheet, ScrollView, Pressable, Alert, Platform } from "react-
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation, DrawerActions } from "@react-navigation/native";
-import * as Clipboard from "expo-clipboard";
 import * as DocumentPicker from "expo-document-picker";
-import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
@@ -23,43 +21,6 @@ export default function BackupScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
-  const [backupData, setBackupData] = useState<string | null>(null);
-
-  const handleCreateBackup = async () => {
-    setLoading(true);
-    try {
-      const data = await getAllData();
-      const backup = JSON.stringify(data, null, 2);
-      setBackupData(backup);
-      
-      const fileName = `bezoar-backup-${new Date().toISOString().split('T')[0]}.json`;
-      
-      if (Platform.OS !== "web") {
-        const fileUri = FileSystem.documentDirectory + fileName;
-        await FileSystem.writeAsStringAsync(fileUri, backup, {
-          encoding: FileSystem.EncodingType.UTF8,
-        });
-        
-        const canShare = await Sharing.isAvailableAsync();
-        if (canShare) {
-          await Sharing.shareAsync(fileUri, {
-            mimeType: "application/json",
-            dialogTitle: t("createBackup"),
-          });
-        } else {
-          await Clipboard.setStringAsync(backup);
-          Alert.alert(t("success"), t("backupCopied"));
-        }
-      } else {
-        await Clipboard.setStringAsync(backup);
-        Alert.alert(t("success"), t("backupCopied"));
-      }
-    } catch (error) {
-      Alert.alert(t("error"), t("failedToCreateBackup"));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleExportToFile = async () => {
     setLoading(true);
@@ -69,14 +30,13 @@ export default function BackupScreen() {
       const fileName = `bezoar-backup-${new Date().toISOString().split('T')[0]}.json`;
       
       if (Platform.OS !== "web") {
-        const fileUri = FileSystem.documentDirectory + fileName;
-        await FileSystem.writeAsStringAsync(fileUri, backup, {
-          encoding: FileSystem.EncodingType.UTF8,
-        });
+        const { File, Paths } = await import("expo-file-system");
+        const file = new File(Paths.document, fileName);
+        file.write(backup);
         
         const canShare = await Sharing.isAvailableAsync();
         if (canShare) {
-          await Sharing.shareAsync(fileUri, {
+          await Sharing.shareAsync(file.uri, {
             mimeType: "application/json",
             dialogTitle: t("exportToFile"),
           });
@@ -94,6 +54,7 @@ export default function BackupScreen() {
         Alert.alert(t("success"), t("fileDownloaded"));
       }
     } catch (error) {
+      console.error("Export error:", error);
       Alert.alert(t("error"), t("failedToExport"));
     } finally {
       setLoading(false);
@@ -112,9 +73,16 @@ export default function BackupScreen() {
       }
 
       const fileUri = result.assets[0].uri;
-      const content = await FileSystem.readAsStringAsync(fileUri, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
+      
+      let content: string;
+      if (Platform.OS !== "web") {
+        const { File } = await import("expo-file-system");
+        const file = new File(fileUri);
+        content = await file.text();
+      } else {
+        const response = await fetch(fileUri);
+        content = await response.text();
+      }
 
       const data = JSON.parse(content);
       if (!data.patients || !data.drugs || !data.sales || !data.installments) {
@@ -136,45 +104,8 @@ export default function BackupScreen() {
         ]
       );
     } catch (error) {
+      console.error("Import error:", error);
       Alert.alert(t("error"), t("invalidBackupFormat"));
-    }
-  };
-
-  const handleCopyBackup = async () => {
-    if (!backupData) return;
-    await Clipboard.setStringAsync(backupData);
-    Alert.alert(t("success"), t("backupCopied"));
-  };
-
-  const handleRestoreFromClipboard = async () => {
-    try {
-      const clipboardContent = await Clipboard.getStringAsync();
-      if (!clipboardContent) {
-        Alert.alert(t("error"), t("clipboardEmpty"));
-        return;
-      }
-
-      const data = JSON.parse(clipboardContent);
-      if (!data.patients || !data.drugs || !data.sales || !data.installments) {
-        throw new Error("Invalid backup format");
-      }
-
-      Alert.alert(
-        t("restoreBackup"),
-        `${data.patients.length} بیمار، ${data.drugs.length} دارو، ${data.sales.length} فروش ${t("foundData")}. ${t("restoreQuestion")}`,
-        [
-          { text: t("cancel"), style: "cancel" },
-          {
-            text: t("confirm"),
-            onPress: async () => {
-              await restoreData(data);
-              Alert.alert(t("success"), t("backupRestored"));
-            },
-          },
-        ]
-      );
-    } catch (error) {
-      Alert.alert(t("error"), t("invalidBackupData"));
     }
   };
 
@@ -215,31 +146,13 @@ export default function BackupScreen() {
               </View>
             </View>
             <Button
-              onPress={handleCreateBackup}
-              loading={loading}
-              icon="download"
-              style={styles.actionButton}
-            >
-              {t("createBackup")}
-            </Button>
-            <Button
               onPress={handleExportToFile}
-              variant="secondary"
+              loading={loading}
               icon="file"
               style={styles.actionButton}
             >
               {t("exportToFile")}
             </Button>
-            {backupData ? (
-              <Button
-                onPress={handleCopyBackup}
-                variant="secondary"
-                icon="copy"
-                style={styles.actionButton}
-              >
-                {t("copyToClipboard")}
-              </Button>
-            ) : null}
           </GlassCard>
         </Animated.View>
 
@@ -266,23 +179,17 @@ export default function BackupScreen() {
             >
               {t("importFromFile")}
             </Button>
-            <Button
-              onPress={handleRestoreFromClipboard}
-              variant="secondary"
-              icon="clipboard"
-              style={styles.actionButton}
-            >
-              {t("restoreFromClipboard")}
-            </Button>
           </GlassCard>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-          <GlassCard style={[styles.infoCard, styles.infoCardRTL]}>
-            <Feather name="info" size={20} color={theme.textSecondary} />
-            <ThemedText type="small" style={[styles.infoText, { color: theme.textSecondary }, styles.infoTextRTL]}>
-              {t("backupInfo")}
-            </ThemedText>
+          <GlassCard>
+            <View style={styles.infoRow}>
+              <Feather name="info" size={20} color={theme.textSecondary} />
+              <ThemedText type="small" style={[styles.infoText, { color: theme.textSecondary }]}>
+                {t("backupInfo")}
+              </ThemedText>
+            </View>
           </GlassCard>
         </Animated.View>
       </ScrollView>
@@ -346,20 +253,12 @@ const styles = StyleSheet.create({
   actionButton: {
     marginTop: Spacing.sm,
   },
-  infoCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginTop: Spacing.md,
-  },
-  infoCardRTL: {
+  infoRow: {
     flexDirection: "row-reverse",
+    alignItems: "flex-start",
   },
   infoText: {
     flex: 1,
-    marginLeft: Spacing.md,
-  },
-  infoTextRTL: {
-    marginLeft: 0,
     marginRight: Spacing.md,
     textAlign: "right",
   },

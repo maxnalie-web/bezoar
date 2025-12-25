@@ -254,7 +254,7 @@ export default function DashboardScreen() {
               recentSales.map((sale) => (
                 <ListItem
                   key={sale.id}
-                  title={`${sale.bottleCount.toLocaleString("fa-IR")} بطری`}
+                  title={`${sale.bottleCount.toLocaleString("fa-IR")} بطری فروخته شده`}
                   subtitle={formatCurrency(sale.totalPrice)}
                   leftIcon="shopping-cart"
                   badge={getPaymentStatusLabel(sale.paymentStatus)}
