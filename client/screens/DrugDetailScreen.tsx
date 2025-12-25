@@ -60,16 +60,6 @@ export default function DrugDetailScreen() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) {
-      Alert.alert(t("error"), "نام دارو الزامی است");
-      return;
-    }
-
-    if (!form.code.trim()) {
-      Alert.alert(t("error"), "کد دارو الزامی است");
-      return;
-    }
-
     setLoading(true);
     try {
       const drugData = {
