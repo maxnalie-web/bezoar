@@ -1,54 +1,63 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, Pressable, Alert, Linking } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Alert, Switch } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation, DrawerActions } from "@react-navigation/native";
+import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import { Image } from "expo-image";
 
+import AppIcon from "@assets/images/icon.png";
 import { ThemedText } from "@/components/ThemedText";
 import { GlassCard } from "@/components/GlassCard";
 import { ListItem } from "@/components/ListItem";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Spacing, BorderRadius } from "@/constants/theme";
 
 export default function SettingsScreen() {
-  const { theme } = useTheme();
+  const { theme, isDark, toggleColorScheme } = useTheme();
+  const { t, language, setLanguage, isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
   const handleLanguagePress = () => {
+    const newLang = language === "fa" ? "en" : "fa";
     Alert.alert(
-      "Language",
-      "Language selection will be available in a future update. Currently displaying in English.",
-      [{ text: "OK" }]
-    );
-  };
-
-  const handleThemePress = () => {
-    Alert.alert(
-      "Theme",
-      "Dark mode is enabled by default. Light mode support coming in a future update.",
-      [{ text: "OK" }]
+      language === "fa" ? "Change Language" : "تغییر زبان",
+      language === "fa" 
+        ? "Switch to English? The app will restart."
+        : "تغییر به فارسی؟ برنامه مجدداً راه‌اندازی می‌شود.",
+      [
+        { text: t("cancel"), style: "cancel" },
+        { 
+          text: t("confirm"), 
+          onPress: () => setLanguage(newLang)
+        },
+      ]
     );
   };
 
   const handleAbout = () => {
     Alert.alert(
-      "About Bezoar",
-      "Bezoar v1.0.0\n\nA patient and drug management application for tracking sales and payments.\n\nDesigned for offline-first usage with local data storage.",
+      `${t("about")} ${t("appName")}`,
+      `${t("appName")} v1.0.0\n\n${isRTL 
+        ? "برنامه مدیریت بیماران و داروها برای پیگیری فروش و پرداخت‌ها.\n\nطراحی شده برای استفاده آفلاین با ذخیره‌سازی محلی داده."
+        : "A patient and drug management application for tracking sales and payments.\n\nDesigned for offline-first usage with local data storage."
+      }`,
       [{ text: "OK" }]
     );
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }, isRTL && styles.headerRTL]}>
         <Pressable
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
           style={styles.menuButton}
         >
           <Feather name="menu" size={24} color={theme.text} />
         </Pressable>
-        <ThemedText type="h3">Settings</ThemedText>
+        <ThemedText type="h3">{t("settings")}</ThemedText>
         <View style={styles.menuButton} />
       </View>
 
@@ -60,62 +69,88 @@ export default function SettingsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          APPEARANCE
-        </ThemedText>
-        <View style={styles.section}>
-          <ListItem
-            title="Language"
-            subtitle="English"
-            leftIcon="globe"
-            onPress={handleLanguagePress}
-          />
-          <ListItem
-            title="Theme"
-            subtitle="Dark Mode"
-            leftIcon="moon"
-            onPress={handleThemePress}
-          />
-        </View>
-
-        <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          DATA MANAGEMENT
-        </ThemedText>
-        <View style={styles.section}>
-          <ListItem
-            title="Backup & Restore"
-            subtitle="Manage your data backups"
-            leftIcon="database"
-            onPress={() => (navigation as any).navigate("Backup")}
-          />
-        </View>
-
-        <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          ABOUT
-        </ThemedText>
-        <View style={styles.section}>
-          <ListItem
-            title="About Bezoar"
-            subtitle="Version 1.0.0"
-            leftIcon="info"
-            onPress={handleAbout}
-          />
-        </View>
-
-        <GlassCard style={styles.appInfo}>
-          <View style={[styles.appIconContainer, { backgroundColor: Colors.dark.accent + "20" }]}>
-            <Feather name="package" size={32} color={Colors.dark.accent} />
+        <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+          <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary, textAlign: isRTL ? "right" : "left" }]}>
+            {t("appearance").toUpperCase()}
+          </ThemedText>
+          <View style={styles.section}>
+            <ListItem
+              title={t("language")}
+              subtitle={language === "fa" ? "فارسی" : "English"}
+              leftIcon="globe"
+              onPress={handleLanguagePress}
+              rtl={isRTL}
+            />
+            <View style={[styles.themeRow, { backgroundColor: theme.backgroundDefault }, isRTL && styles.themeRowRTL]}>
+              <View style={[styles.themeIconContainer, isRTL && styles.themeIconContainerRTL]}>
+                <Feather name={isDark ? "moon" : "sun"} size={22} color={theme.accent} />
+                <View style={isRTL ? styles.themeTextRTL : styles.themeText}>
+                  <ThemedText style={styles.themeTitle}>{t("theme")}</ThemedText>
+                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                    {isDark ? t("darkMode") : t("lightMode")}
+                  </ThemedText>
+                </View>
+              </View>
+              <Switch
+                value={isDark}
+                onValueChange={toggleColorScheme}
+                trackColor={{ false: theme.backgroundTertiary, true: theme.accent }}
+                thumbColor={theme.buttonText}
+              />
+            </View>
           </View>
-          <ThemedText type="h4" style={styles.appName}>
-            Bezoar
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+          <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary, textAlign: isRTL ? "right" : "left" }]}>
+            {t("dataManagement").toUpperCase()}
           </ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center" }}>
-            Patient & Drug Management
+          <View style={styles.section}>
+            <ListItem
+              title={t("backup")}
+              subtitle={isRTL ? "مدیریت پشتیبان‌های داده" : "Manage your data backups"}
+              leftIcon="database"
+              onPress={() => (navigation as any).navigate("Backup")}
+              rtl={isRTL}
+            />
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(300).duration(400)}>
+          <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary, textAlign: isRTL ? "right" : "left" }]}>
+            {t("about").toUpperCase()}
           </ThemedText>
-          <ThemedText type="small" style={[styles.version, { color: theme.textSecondary }]}>
-            v1.0.0
-          </ThemedText>
-        </GlassCard>
+          <View style={styles.section}>
+            <ListItem
+              title={`${t("about")} ${t("appName")}`}
+              subtitle={`${t("version")} 1.0.0`}
+              leftIcon="info"
+              onPress={handleAbout}
+              rtl={isRTL}
+            />
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeIn.delay(400).duration(500)}>
+          <GlassCard style={styles.appInfo}>
+            <View style={[styles.appIconContainer, { backgroundColor: theme.accent + "20" }]}>
+              <Image
+                source={AppIcon}
+                style={styles.appIcon}
+                contentFit="contain"
+              />
+            </View>
+            <ThemedText type="h4" style={styles.appName}>
+              {t("appName")}
+            </ThemedText>
+            <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center" }}>
+              {isRTL ? "مدیریت بیمار و دارو" : "Patient & Drug Management"}
+            </ThemedText>
+            <ThemedText type="small" style={[styles.version, { color: theme.textSecondary }]}>
+              v1.0.0
+            </ThemedText>
+          </GlassCard>
+        </Animated.View>
       </ScrollView>
     </View>
   );
@@ -131,6 +166,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
+  },
+  headerRTL: {
+    flexDirection: "row-reverse",
   },
   menuButton: {
     width: 44,
@@ -154,6 +192,35 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: Spacing.md,
   },
+  themeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.xs,
+  },
+  themeRowRTL: {
+    flexDirection: "row-reverse",
+  },
+  themeIconContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  themeIconContainerRTL: {
+    flexDirection: "row-reverse",
+  },
+  themeText: {
+    marginLeft: Spacing.md,
+  },
+  themeTextRTL: {
+    marginRight: Spacing.md,
+    marginLeft: 0,
+  },
+  themeTitle: {
+    fontWeight: "500",
+  },
   appInfo: {
     alignItems: "center",
     marginTop: Spacing["2xl"],
@@ -166,6 +233,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.md,
+    overflow: "hidden",
+  },
+  appIcon: {
+    width: 64,
+    height: 64,
   },
   appName: {
     marginBottom: Spacing.xs,

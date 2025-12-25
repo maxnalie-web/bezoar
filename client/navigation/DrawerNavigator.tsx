@@ -12,10 +12,12 @@ import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
+import Animated, { FadeInLeft, FadeInRight, FadeIn } from "react-native-reanimated";
 
 import AppIcon from "@assets/images/icon.png";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 
 import DashboardScreen from "@/screens/DashboardScreen";
@@ -38,24 +40,25 @@ export type DrawerParamList = {
 
 type DrawerItemConfig = {
   name: keyof DrawerParamList;
-  label: string;
+  labelKey: string;
   icon: keyof typeof Feather.glyphMap;
 };
 
 const drawerItems: DrawerItemConfig[] = [
-  { name: "Dashboard", label: "Dashboard", icon: "grid" },
-  { name: "Patients", label: "Patients", icon: "users" },
-  { name: "Drugs", label: "Drugs", icon: "package" },
-  { name: "Sales", label: "Sales", icon: "shopping-cart" },
-  { name: "Reports", label: "Reports", icon: "bar-chart-2" },
-  { name: "Backup", label: "Backup", icon: "database" },
-  { name: "Settings", label: "Settings", icon: "settings" },
+  { name: "Dashboard", labelKey: "dashboard", icon: "grid" },
+  { name: "Patients", labelKey: "patients", icon: "users" },
+  { name: "Drugs", labelKey: "drugs", icon: "package" },
+  { name: "Sales", labelKey: "sales", icon: "shopping-cart" },
+  { name: "Reports", labelKey: "reports", icon: "bar-chart-2" },
+  { name: "Backup", labelKey: "backup", icon: "database" },
+  { name: "Settings", labelKey: "settings", icon: "settings" },
 ];
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
 function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps) {
   const { theme, isDark } = useTheme();
+  const { t, isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
   const currentRoute = state.routes[state.index].name;
 
@@ -90,56 +93,74 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.logoContainer}>
+        <Animated.View 
+          entering={FadeIn.duration(500)}
+          style={[styles.logoContainer, isRTL && styles.logoContainerRTL]}
+        >
           <Image
             source={AppIcon}
             style={styles.logo}
             contentFit="contain"
           />
-          <ThemedText type="h4" style={styles.appName}>
-            Bezoar
+          <ThemedText type="h4" style={[styles.appName, isRTL && styles.appNameRTL]}>
+            {t("appName")}
           </ThemedText>
-        </View>
+        </Animated.View>
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: theme.glassBorder }]} />
 
-        {drawerItems.map((item) => {
+        {drawerItems.map((item, index) => {
           const isActive = currentRoute === item.name;
+          const EnterAnimation = isRTL ? FadeInRight : FadeInLeft;
           return (
-            <Pressable
+            <Animated.View
               key={item.name}
-              onPress={() => navigation.navigate(item.name)}
-              style={({ pressed }) => [
-                styles.drawerItem,
-                isActive && [
-                  styles.drawerItemActive,
-                  { backgroundColor: Colors.dark.accent + "20" },
-                ],
-                pressed && styles.drawerItemPressed,
-              ]}
+              entering={EnterAnimation.delay(index * 50).duration(400)}
             >
-              <Feather
-                name={item.icon}
-                size={22}
-                color={isActive ? Colors.dark.accent : theme.textSecondary}
-              />
-              <ThemedText
-                style={[
-                  styles.drawerItemLabel,
-                  { color: isActive ? Colors.dark.accent : theme.text },
+              <Pressable
+                onPress={() => navigation.navigate(item.name)}
+                style={({ pressed }) => [
+                  styles.drawerItem,
+                  isRTL && styles.drawerItemRTL,
+                  isActive && [
+                    styles.drawerItemActive,
+                    { backgroundColor: theme.accent + "20" },
+                  ],
+                  pressed && styles.drawerItemPressed,
                 ]}
               >
-                {item.label}
-              </ThemedText>
-              {isActive ? (
-                <View
-                  style={[
-                    styles.activeIndicator,
-                    { backgroundColor: Colors.dark.accent },
-                  ]}
+                {isActive && !isRTL ? (
+                  <View
+                    style={[
+                      styles.activeIndicator,
+                      { backgroundColor: theme.accent },
+                    ]}
+                  />
+                ) : null}
+                <Feather
+                  name={item.icon}
+                  size={22}
+                  color={isActive ? theme.accent : theme.textSecondary}
                 />
-              ) : null}
-            </Pressable>
+                <ThemedText
+                  style={[
+                    styles.drawerItemLabel,
+                    isRTL && styles.drawerItemLabelRTL,
+                    { color: isActive ? theme.accent : theme.text },
+                  ]}
+                >
+                  {t(item.labelKey)}
+                </ThemedText>
+                {isActive && isRTL ? (
+                  <View
+                    style={[
+                      styles.activeIndicatorRTL,
+                      { backgroundColor: theme.accent },
+                    ]}
+                  />
+                ) : null}
+              </Pressable>
+            </Animated.View>
           );
         })}
       </ScrollView>
@@ -149,6 +170,7 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
 
 export default function DrawerNavigator() {
   const { theme, isDark } = useTheme();
+  const { isRTL } = useLanguage();
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768;
 
@@ -158,6 +180,7 @@ export default function DrawerNavigator() {
       screenOptions={{
         headerShown: false,
         drawerType: isLargeScreen ? "permanent" : "front",
+        drawerPosition: isRTL ? "right" : "left",
         drawerStyle: {
           width: Spacing.sidebarExpandedWidth,
           backgroundColor: "transparent",
@@ -195,6 +218,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
     paddingHorizontal: Spacing.md,
   },
+  logoContainerRTL: {
+    flexDirection: "row-reverse",
+  },
   logo: {
     width: 40,
     height: 40,
@@ -203,9 +229,12 @@ const styles = StyleSheet.create({
   appName: {
     marginLeft: Spacing.md,
   },
+  appNameRTL: {
+    marginLeft: 0,
+    marginRight: Spacing.md,
+  },
   divider: {
     height: 1,
-    backgroundColor: Colors.dark.glassBorder,
     marginBottom: Spacing.xl,
   },
   drawerItem: {
@@ -216,6 +245,9 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
     marginBottom: Spacing.xs,
     position: "relative",
+  },
+  drawerItemRTL: {
+    flexDirection: "row-reverse",
   },
   drawerItemActive: {
     borderRadius: BorderRadius.sm,
@@ -228,9 +260,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
   },
+  drawerItemLabelRTL: {
+    marginLeft: 0,
+    marginRight: Spacing.md,
+  },
   activeIndicator: {
     position: "absolute",
     left: 0,
+    top: "25%",
+    bottom: "25%",
+    width: 3,
+    borderRadius: BorderRadius.full,
+  },
+  activeIndicatorRTL: {
+    position: "absolute",
+    right: 0,
     top: "25%",
     bottom: "25%",
     width: 3,
