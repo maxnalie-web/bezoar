@@ -10,11 +10,8 @@ import {
 import { createDrawerNavigator, DrawerContentComponentProps } from "@react-navigation/drawer";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Image } from "expo-image";
 import Animated, { FadeInRight, FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-
-import AppIcon from "@assets/images/icon.png";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -85,11 +82,9 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
             entering={FadeIn.duration(500)}
             style={styles.logoContainer}
           >
-            <Image
-              source={AppIcon}
-              style={styles.logo}
-              contentFit="contain"
-            />
+            <View style={[styles.logoIcon, { backgroundColor: theme.accent + "20" }]}>
+              <Feather name="activity" size={22} color={theme.accent} />
+            </View>
             <ThemedText type="h4" style={styles.appName}>
               {t("appName")}
             </ThemedText>
@@ -208,10 +203,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing["2xl"],
     paddingHorizontal: Spacing.sm,
   },
-  logo: {
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.sm,
+  logoIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
+    justifyContent: "center",
   },
   appName: {
     marginRight: Spacing.md,
