@@ -13,7 +13,7 @@ import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { getAllData, restoreData } from "@/lib/storage";
+import { getAllData, restoreData, RestoreResult } from "@/lib/storage";
 
 export default function BackupScreen() {
   const { theme } = useTheme();
@@ -91,14 +91,23 @@ export default function BackupScreen() {
 
       Alert.alert(
         t("restoreBackup"),
-        `${data.patients.length} بیمار، ${data.drugs.length} دارو، ${data.sales.length} فروش ${t("foundData")}. ${t("restoreQuestion")}`,
+        `${data.patients.length} بیمار، ${data.drugs.length} دارو، ${data.sales.length} فروش ${t("foundData")}.\n\n${t("smartRestoreInfo")}`,
         [
           { text: t("cancel"), style: "cancel" },
           {
             text: t("confirm"),
             onPress: async () => {
-              await restoreData(data);
-              Alert.alert(t("success"), t("backupRestored"));
+              const result = await restoreData(data);
+              if (result.totalNew === 0) {
+                Alert.alert(t("success"), t("noNewDataToRestore"));
+              } else {
+                const details = [];
+                if (result.newPatients > 0) details.push(`${result.newPatients} ${t("newPatient")}`);
+                if (result.newDrugs > 0) details.push(`${result.newDrugs} ${t("newDrug")}`);
+                if (result.newSales > 0) details.push(`${result.newSales} ${t("newSale")}`);
+                if (result.newInstallments > 0) details.push(`${result.newInstallments} ${t("newInstallment")}`);
+                Alert.alert(t("success"), `${t("dataRestored")}: ${details.join("، ")}`);
+              }
             },
           },
         ]

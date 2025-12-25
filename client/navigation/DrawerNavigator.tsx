@@ -9,16 +9,16 @@ import {
 } from "react-native";
 import { createDrawerNavigator, DrawerContentComponentProps } from "@react-navigation/drawer";
 import { Feather } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import Animated, { FadeInRight, FadeIn } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
 
 import AppIcon from "@assets/images/icon.png";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 import DashboardScreen from "@/screens/DashboardScreen";
 import PatientsScreen from "@/screens/PatientsScreen";
@@ -45,10 +45,10 @@ type DrawerItemConfig = {
 };
 
 const drawerItems: DrawerItemConfig[] = [
-  { name: "Dashboard", labelKey: "dashboard", icon: "grid" },
+  { name: "Dashboard", labelKey: "dashboard", icon: "home" },
   { name: "Patients", labelKey: "patients", icon: "users" },
   { name: "Drugs", labelKey: "drugs", icon: "package" },
-  { name: "Sales", labelKey: "sales", icon: "shopping-cart" },
+  { name: "Sales", labelKey: "sales", icon: "shopping-bag" },
   { name: "Reports", labelKey: "reports", icon: "bar-chart-2" },
   { name: "Backup", labelKey: "backup", icon: "database" },
   { name: "Settings", labelKey: "settings", icon: "settings" },
@@ -62,97 +62,94 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
   const insets = useSafeAreaInsets();
   const currentRoute = state.routes[state.index].name;
 
-  const renderBackground = () => {
-    if (Platform.OS === "ios") {
-      return (
-        <BlurView
-          intensity={80}
-          tint={isDark ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
-        />
-      );
-    }
-    return (
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          { backgroundColor: theme.backgroundDefault },
-        ]}
-      />
-    );
-  };
-
   return (
-    <View style={styles.drawerContainer}>
-      {renderBackground()}
-      <ScrollView
-        style={styles.drawerScroll}
-        contentContainerStyle={[
-          styles.drawerContent,
-          { paddingTop: insets.top + Spacing.xl, paddingBottom: insets.bottom + Spacing.xl },
+    <View style={[styles.drawerContainer, { backgroundColor: theme.backgroundRoot }]}>
+      <View 
+        style={[
+          styles.capsuleContainer,
+          { 
+            backgroundColor: isDark ? theme.capsuleBackground : theme.capsuleBackground,
+            borderColor: theme.capsuleBorder,
+            marginTop: insets.top + Spacing.lg,
+            marginBottom: insets.bottom + Spacing.lg,
+          },
+          Platform.OS === "ios" && Shadows.capsule,
         ]}
-        showsVerticalScrollIndicator={false}
       >
-        <Animated.View 
-          entering={FadeIn.duration(500)}
-          style={styles.logoContainer}
+        <ScrollView
+          style={styles.drawerScroll}
+          contentContainerStyle={styles.drawerContent}
+          showsVerticalScrollIndicator={false}
         >
-          <ThemedText type="h4" style={styles.appName}>
-            {t("appName")}
-          </ThemedText>
-          <Image
-            source={AppIcon}
-            style={styles.logo}
-            contentFit="contain"
-          />
-        </Animated.View>
+          <Animated.View 
+            entering={FadeIn.duration(500)}
+            style={styles.logoContainer}
+          >
+            <Image
+              source={AppIcon}
+              style={styles.logo}
+              contentFit="contain"
+            />
+            <ThemedText type="h4" style={styles.appName}>
+              {t("appName")}
+            </ThemedText>
+          </Animated.View>
 
-        <View style={[styles.divider, { backgroundColor: theme.glassBorder }]} />
-
-        {drawerItems.map((item, index) => {
-          const isActive = currentRoute === item.name;
-          return (
-            <Animated.View
-              key={item.name}
-              entering={FadeInRight.delay(index * 50).duration(400)}
-            >
-              <Pressable
-                onPress={() => navigation.navigate(item.name)}
-                style={({ pressed }) => [
-                  styles.drawerItem,
-                  isActive && [
-                    styles.drawerItemActive,
-                    { backgroundColor: theme.accent + "20" },
-                  ],
-                  pressed && styles.drawerItemPressed,
-                ]}
-              >
-                {isActive ? (
-                  <View
-                    style={[
-                      styles.activeIndicator,
-                      { backgroundColor: theme.accent },
-                    ]}
-                  />
-                ) : null}
-                <ThemedText
-                  style={[
-                    styles.drawerItemLabel,
-                    { color: isActive ? theme.accent : theme.text },
-                  ]}
+          <View style={styles.navSection}>
+            {drawerItems.map((item, index) => {
+              const isActive = currentRoute === item.name;
+              return (
+                <Animated.View
+                  key={item.name}
+                  entering={FadeInRight.delay(index * 50).duration(400)}
                 >
-                  {t(item.labelKey)}
-                </ThemedText>
-                <Feather
-                  name={item.icon}
-                  size={22}
-                  color={isActive ? theme.accent : theme.textSecondary}
-                />
-              </Pressable>
-            </Animated.View>
-          );
-        })}
-      </ScrollView>
+                  <Pressable
+                    onPress={() => navigation.navigate(item.name)}
+                    style={({ pressed }) => [
+                      styles.drawerItem,
+                      pressed && styles.drawerItemPressed,
+                    ]}
+                  >
+                    {isActive ? (
+                      <LinearGradient
+                        colors={theme.activeGradient as [string, string]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={[styles.activeBackground, { borderColor: theme.accent + "40" }]}
+                      />
+                    ) : null}
+                    {isActive ? (
+                      <View
+                        style={[
+                          styles.activeIndicator,
+                          { backgroundColor: theme.accent },
+                          Shadows.glow,
+                        ]}
+                      />
+                    ) : null}
+                    <View style={[styles.iconContainer, isActive && { backgroundColor: isDark ? theme.accent + "15" : theme.accent + "10" }]}>
+                      <Feather
+                        name={item.icon}
+                        size={20}
+                        color={isActive ? theme.accent : theme.textSecondary}
+                      />
+                    </View>
+                    <ThemedText
+                      style={[
+                        styles.drawerItemLabel,
+                        { color: isActive ? theme.text : theme.textSecondary },
+                        isActive && { fontWeight: "600" },
+                      ]}
+                    >
+                      {t(item.labelKey)}
+                    </ThemedText>
+                  </Pressable>
+                </Animated.View>
+              );
+            })}
+          </View>
+        </ScrollView>
+      </View>
     </View>
   );
 }
@@ -173,10 +170,7 @@ export default function DrawerNavigator() {
           width: Spacing.sidebarExpandedWidth,
           backgroundColor: "transparent",
         },
-        overlayColor: isDark ? "rgba(0, 0, 0, 0.6)" : "rgba(0, 0, 0, 0.3)",
-        sceneContainerStyle: {
-          backgroundColor: theme.backgroundRoot,
-        },
+        overlayColor: isDark ? "rgba(0, 0, 0, 0.7)" : "rgba(0, 0, 0, 0.4)",
       }}
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
@@ -193,58 +187,77 @@ export default function DrawerNavigator() {
 const styles = StyleSheet.create({
   drawerContainer: {
     flex: 1,
+    paddingHorizontal: Spacing.md,
+  },
+  capsuleContainer: {
+    flex: 1,
+    borderRadius: BorderRadius.capsule,
+    borderWidth: 1,
+    overflow: "hidden",
   },
   drawerScroll: {
     flex: 1,
   },
   drawerContent: {
+    paddingVertical: Spacing.xl,
     paddingHorizontal: Spacing.lg,
   },
   logoContainer: {
     flexDirection: "row-reverse",
     alignItems: "center",
-    marginBottom: Spacing.xl,
-    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing["2xl"],
+    paddingHorizontal: Spacing.sm,
   },
   logo: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: BorderRadius.sm,
   },
   appName: {
     marginRight: Spacing.md,
   },
-  divider: {
-    height: 1,
-    marginBottom: Spacing.xl,
+  navSection: {
+    gap: Spacing.xs,
   },
   drawerItem: {
     flexDirection: "row-reverse",
     alignItems: "center",
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.sm,
-    marginBottom: Spacing.xs,
+    borderRadius: BorderRadius.lg,
     position: "relative",
+    overflow: "hidden",
   },
-  drawerItemActive: {
-    borderRadius: BorderRadius.sm,
+  activeBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
   },
   drawerItemPressed: {
     opacity: 0.7,
   },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   drawerItemLabel: {
     marginRight: Spacing.md,
     fontSize: 15,
-    fontWeight: "500",
     flex: 1,
     textAlign: "right",
   },
   activeIndicator: {
     position: "absolute",
     right: 0,
-    top: "25%",
-    bottom: "25%",
+    top: 8,
+    bottom: 8,
     width: 3,
     borderRadius: BorderRadius.full,
   },

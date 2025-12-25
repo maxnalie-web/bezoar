@@ -205,13 +205,50 @@ export async function getAllData(): Promise<AppData> {
   return { patients, drugs, sales, installments };
 }
 
-export async function restoreData(data: AppData): Promise<void> {
-  await Promise.all([
-    AsyncStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(data.patients)),
-    AsyncStorage.setItem(STORAGE_KEYS.DRUGS, JSON.stringify(data.drugs)),
-    AsyncStorage.setItem(STORAGE_KEYS.SALES, JSON.stringify(data.sales)),
-    AsyncStorage.setItem(STORAGE_KEYS.INSTALLMENTS, JSON.stringify(data.installments)),
+function mergeArraysById<T extends { id: string }>(existing: T[], incoming: T[]): { merged: T[]; newCount: number } {
+  const existingIds = new Set(existing.map(item => item.id));
+  const newItems = incoming.filter(item => !existingIds.has(item.id));
+  return {
+    merged: [...existing, ...newItems],
+    newCount: newItems.length,
+  };
+}
+
+export interface RestoreResult {
+  newPatients: number;
+  newDrugs: number;
+  newSales: number;
+  newInstallments: number;
+  totalNew: number;
+}
+
+export async function restoreData(data: AppData): Promise<RestoreResult> {
+  const [existingPatients, existingDrugs, existingSales, existingInstallments] = await Promise.all([
+    getPatients(),
+    getDrugs(),
+    getSales(),
+    getInstallments(),
   ]);
+
+  const patientsResult = mergeArraysById(existingPatients, data.patients);
+  const drugsResult = mergeArraysById(existingDrugs, data.drugs);
+  const salesResult = mergeArraysById(existingSales, data.sales);
+  const installmentsResult = mergeArraysById(existingInstallments, data.installments);
+
+  await Promise.all([
+    AsyncStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patientsResult.merged)),
+    AsyncStorage.setItem(STORAGE_KEYS.DRUGS, JSON.stringify(drugsResult.merged)),
+    AsyncStorage.setItem(STORAGE_KEYS.SALES, JSON.stringify(salesResult.merged)),
+    AsyncStorage.setItem(STORAGE_KEYS.INSTALLMENTS, JSON.stringify(installmentsResult.merged)),
+  ]);
+
+  return {
+    newPatients: patientsResult.newCount,
+    newDrugs: drugsResult.newCount,
+    newSales: salesResult.newCount,
+    newInstallments: installmentsResult.newCount,
+    totalNew: patientsResult.newCount + drugsResult.newCount + salesResult.newCount + installmentsResult.newCount,
+  };
 }
 
 export async function clearAllData(): Promise<void> {
