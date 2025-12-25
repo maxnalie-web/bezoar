@@ -12,8 +12,8 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { getSales, getPatients, getDrugs, saveSale, updateSale } from "@/lib/storage";
-import { Patient, Drug, PaymentStatus } from "@/types/models";
+import { getSales, getPatients, getDrugs, saveSale, updateSale, getInstallments, updateInstallment } from "@/lib/storage";
+import { Patient, Drug, PaymentStatus, Installment } from "@/types/models";
 
 export default function SaleDetailScreen() {
   const { theme } = useTheme();
@@ -30,6 +30,7 @@ export default function SaleDetailScreen() {
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
   const [showPatientPicker, setShowPatientPicker] = useState(false);
   const [showDrugPicker, setShowDrugPicker] = useState(false);
+  const [installments, setInstallments] = useState<Installment[]>([]);
 
   const [form, setForm] = useState({
     bottleCount: "1",
@@ -80,8 +81,30 @@ export default function SaleDetailScreen() {
           installmentCount: sale.installmentCount?.toString() || "",
           installmentAmount: sale.installmentAmount?.toString() || "",
         });
+        
+        const allInstallments = await getInstallments();
+        const saleInstallments = allInstallments
+          .filter((i) => i.saleId === saleId)
+          .sort((a, b) => a.installmentNumber - b.installmentNumber);
+        setInstallments(saleInstallments);
       }
     }
+  };
+
+  const toggleInstallmentStatus = async (installmentId: string) => {
+    const installment = installments.find((i) => i.id === installmentId);
+    if (!installment) return;
+
+    const newStatus = installment.status === "paid" ? "unpaid" : "paid";
+    const paidDate = newStatus === "paid" ? new Date().toISOString() : undefined;
+
+    await updateInstallment(installmentId, { status: newStatus, paidDate });
+    
+    setInstallments((prev) =>
+      prev.map((i) =>
+        i.id === installmentId ? { ...i, status: newStatus, paidDate } : i
+      )
+    );
   };
 
   const calculateTotal = () => {
@@ -339,6 +362,79 @@ export default function SaleDetailScreen() {
           </View>
         ) : null}
 
+        {saleId && installments.length > 0 ? (
+          <View style={styles.installmentsListSection}>
+            <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.accent, textAlign: "right" }]}>
+              {t("installmentsStatus")}
+            </ThemedText>
+            
+            <GlassCard style={styles.installmentsSummary}>
+              <View style={styles.summaryRow}>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {t("paidCount")}: {installments.filter((i) => i.status === "paid").length} / {installments.length}
+                </ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {t("remainingCount")}: {formatCurrency(
+                    installments.filter((i) => i.status === "unpaid").reduce((sum, i) => sum + i.amount, 0)
+                  )}
+                </ThemedText>
+              </View>
+            </GlassCard>
+
+            {installments.map((inst) => (
+              <Pressable
+                key={inst.id}
+                onPress={() => toggleInstallmentStatus(inst.id)}
+                style={[
+                  styles.installmentItem,
+                  { 
+                    backgroundColor: theme.capsuleBackground,
+                    borderColor: inst.status === "paid" ? theme.success + "40" : theme.glassBorder,
+                  },
+                ]}
+              >
+                <View style={styles.installmentCheckbox}>
+                  <View
+                    style={[
+                      styles.checkbox,
+                      { borderColor: inst.status === "paid" ? theme.success : theme.textSecondary },
+                      inst.status === "paid" && { backgroundColor: theme.success },
+                    ]}
+                  >
+                    {inst.status === "paid" ? (
+                      <Feather name="check" size={14} color="#fff" />
+                    ) : null}
+                  </View>
+                </View>
+                <View style={styles.installmentInfo}>
+                  <ThemedText type="body" style={{ textAlign: "right" }}>
+                    {t("installmentNumber")} {inst.installmentNumber}
+                  </ThemedText>
+                  <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                    {formatCurrency(inst.amount)}
+                  </ThemedText>
+                </View>
+                <View style={styles.installmentStatus}>
+                  <ThemedText
+                    type="small"
+                    style={{
+                      color: inst.status === "paid" ? theme.success : theme.warning,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {inst.status === "paid" ? t("paidInstallment") : t("unpaidInstallment")}
+                  </ThemedText>
+                  {inst.paidDate ? (
+                    <ThemedText type="small" style={{ color: theme.textSecondary, fontSize: 10 }}>
+                      {new Date(inst.paidDate).toLocaleDateString("fa-IR")}
+                    </ThemedText>
+                  ) : null}
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+
         <Button onPress={handleSave} loading={loading} style={styles.saveButton}>
           {saleId ? t("updateSale") : t("newSale")}
         </Button>
@@ -413,6 +509,42 @@ const styles = StyleSheet.create({
   },
   installmentSection: {
     marginTop: Spacing.md,
+  },
+  installmentsListSection: {
+    marginTop: Spacing.xl,
+  },
+  installmentsSummary: {
+    marginBottom: Spacing.md,
+  },
+  summaryRow: {
+    flexDirection: "row-reverse",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  installmentItem: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+  },
+  installmentCheckbox: {
+    marginLeft: Spacing.md,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  installmentInfo: {
+    flex: 1,
+  },
+  installmentStatus: {
+    alignItems: "flex-start",
   },
   saveButton: {
     marginTop: Spacing.xl,
