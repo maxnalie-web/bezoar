@@ -8,11 +8,13 @@ import { FormInput } from "@/components/FormInput";
 import { Button } from "@/components/Button";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, Colors } from "@/constants/theme";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Spacing } from "@/constants/theme";
 import { getDrugs, saveDrug, updateDrug } from "@/lib/storage";
 
 export default function DrugDetailScreen() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
@@ -25,7 +27,7 @@ export default function DrugDetailScreen() {
     type: "",
     purchasePrice: "",
     salePrice: "",
-    unit: "Bottle",
+    unit: t("bottle"),
     description: "",
   });
 
@@ -37,9 +39,9 @@ export default function DrugDetailScreen() {
 
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: drugId ? "Edit Drug" : "Add Drug",
+      headerTitle: drugId ? t("editDrug") : t("addDrug"),
     });
-  }, [drugId, navigation]);
+  }, [drugId, navigation, t]);
 
   const loadDrug = async () => {
     const drugs = await getDrugs();
@@ -59,12 +61,12 @@ export default function DrugDetailScreen() {
 
   const handleSave = async () => {
     if (!form.name.trim()) {
-      Alert.alert("Error", "Drug name is required");
+      Alert.alert(t("error"), "نام دارو الزامی است");
       return;
     }
 
     if (!form.code.trim()) {
-      Alert.alert("Error", "Drug code is required");
+      Alert.alert(t("error"), "کد دارو الزامی است");
       return;
     }
 
@@ -87,7 +89,7 @@ export default function DrugDetailScreen() {
       }
       navigation.goBack();
     } catch (error) {
-      Alert.alert("Error", "Failed to save drug");
+      Alert.alert(t("error"), "خطا در ذخیره دارو");
     } finally {
       setLoading(false);
     }
@@ -107,68 +109,75 @@ export default function DrugDetailScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <ThemedText type="h4" style={styles.sectionTitle}>
-          Drug Information
+        <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.accent, textAlign: "right" }]}>
+          اطلاعات دارو
         </ThemedText>
 
         <FormInput
-          label="Drug Name"
+          label={t("drugName")}
           value={form.name}
           onChangeText={(value) => updateField("name", value)}
-          placeholder="Enter drug name"
+          placeholder={t("enterDrugName")}
+          rtl={true}
         />
         <FormInput
-          label="Drug Code"
+          label={t("drugCode")}
           value={form.code}
           onChangeText={(value) => updateField("code", value)}
-          placeholder="Enter drug code (e.g., BZR001)"
+          placeholder="مثال: BZR001"
+          rtl={true}
         />
         <FormInput
-          label="Drug Type"
+          label={t("drugType")}
           value={form.type}
           onChangeText={(value) => updateField("type", value)}
-          placeholder="e.g., Herbal Medicine"
+          placeholder="مثال: داروی گیاهی"
+          rtl={true}
         />
 
-        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl }]}>
-          Pricing
+        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl, color: theme.accent, textAlign: "right" }]}>
+          قیمت‌گذاری
         </ThemedText>
 
         <FormInput
-          label="Purchase Price (Toman)"
+          label={`${t("purchasePrice")} (${t("toman")})`}
           value={form.purchasePrice}
           onChangeText={(value) => updateField("purchasePrice", value)}
-          placeholder="Enter purchase price"
+          placeholder={t("enterPurchasePrice")}
           keyboardType="numeric"
+          rtl={true}
         />
         <FormInput
-          label="Sale Price (Toman)"
+          label={`${t("salePrice")} (${t("toman")})`}
           value={form.salePrice}
           onChangeText={(value) => updateField("salePrice", value)}
-          placeholder="Enter sale price"
+          placeholder={t("enterSalePrice")}
           keyboardType="numeric"
+          rtl={true}
         />
         <FormInput
-          label="Unit"
+          label={t("unit")}
           value={form.unit}
           onChangeText={(value) => updateField("unit", value)}
-          placeholder="e.g., Bottle"
+          placeholder={`مثال: ${t("bottle")}`}
+          rtl={true}
         />
 
-        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl }]}>
-          Additional Info
+        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl, color: theme.accent, textAlign: "right" }]}>
+          اطلاعات تکمیلی
         </ThemedText>
 
         <FormInput
-          label="Description"
+          label="توضیحات"
           value={form.description}
           onChangeText={(value) => updateField("description", value)}
-          placeholder="Enter drug description"
+          placeholder="توضیحات دارو را وارد کنید"
           multiline
+          rtl={true}
         />
 
         <Button onPress={handleSave} loading={loading} style={styles.saveButton}>
-          {drugId ? "Update Drug" : "Add Drug"}
+          {drugId ? t("updateDrug") : t("addDrug")}
         </Button>
       </KeyboardAwareScrollViewCompat>
     </View>
@@ -188,7 +197,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginBottom: Spacing.lg,
-    color: Colors.dark.accent,
   },
   saveButton: {
     marginTop: Spacing.xl,

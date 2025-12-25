@@ -5,7 +5,7 @@ import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 
 interface EmptyStateProps {
   icon: keyof typeof Feather.glyphMap;
@@ -29,10 +29,10 @@ export function EmptyState({
       <View
         style={[
           styles.iconContainer,
-          { backgroundColor: Colors.dark.accent + "15" },
+          { backgroundColor: theme.accent + "15" },
         ]}
       >
-        <Feather name={icon} size={48} color={Colors.dark.accent} />
+        <Feather name={icon} size={48} color={theme.accent} />
       </View>
       <ThemedText type="h4" style={styles.title}>
         {title}

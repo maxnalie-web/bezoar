@@ -1,19 +1,22 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { View, StyleSheet, FlatList, Pressable, RefreshControl, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation, DrawerActions, useFocusEffect } from "@react-navigation/native";
+import Animated, { FadeInRight } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
 import { GlassCard } from "@/components/GlassCard";
 import { EmptyState } from "@/components/EmptyState";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import { getDrugs, deleteDrug } from "@/lib/storage";
 import { Drug } from "@/types/models";
 
 export default function DrugsScreen() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [drugs, setDrugs] = useState<Drug[]>([]);
@@ -48,12 +51,12 @@ export default function DrugsScreen() {
 
   const handleDeleteDrug = (drug: Drug) => {
     Alert.alert(
-      "Delete Drug",
-      `Are you sure you want to delete ${drug.name}?`,
+      t("delete"),
+      `آیا مطمئن هستید که می‌خواهید ${drug.name} را حذف کنید؟`,
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("delete"),
           style: "destructive",
           onPress: async () => {
             await deleteDrug(drug.id);
@@ -65,84 +68,86 @@ export default function DrugsScreen() {
   };
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString() + " T";
+    return amount.toLocaleString("fa-IR") + " " + t("toman");
   };
 
-  const renderDrug = ({ item }: { item: Drug }) => (
-    <GlassCard
-      style={styles.drugCard}
-      onPress={() =>
-        (navigation as any).navigate("DrugDetail", { drugId: item.id })
-      }
-    >
-      <View style={styles.drugHeader}>
-        <View style={[styles.iconContainer, { backgroundColor: Colors.dark.accent + "30" }]}>
-          <Feather name="package" size={24} color={Colors.dark.accent} />
+  const renderDrug = ({ item, index }: { item: Drug; index: number }) => (
+    <Animated.View entering={FadeInRight.delay(index * 50).duration(300)}>
+      <GlassCard
+        style={styles.drugCard}
+        onPress={() =>
+          (navigation as any).navigate("DrugDetail", { drugId: item.id })
+        }
+      >
+        <View style={[styles.drugHeader, styles.drugHeaderRTL]}>
+          <View style={[styles.iconContainer, { backgroundColor: theme.accent + "30" }]}>
+            <Feather name="package" size={24} color={theme.accent} />
+          </View>
+          <View style={[styles.drugInfo, styles.drugInfoRTL]}>
+            <ThemedText type="body" style={[styles.drugName, { textAlign: "right" }]}>
+              {item.name}
+            </ThemedText>
+            <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+              {t("drugCode")}: {item.code}
+            </ThemedText>
+          </View>
+          <Pressable
+            onPress={() => handleDeleteDrug(item)}
+            style={styles.deleteButton}
+            hitSlop={8}
+          >
+            <Feather name="trash-2" size={18} color={theme.error} />
+          </Pressable>
         </View>
-        <View style={styles.drugInfo}>
-          <ThemedText type="body" style={styles.drugName}>
-            {item.name}
-          </ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            Code: {item.code}
-          </ThemedText>
+        <View style={[styles.priceContainer, styles.priceContainerRTL]}>
+          <View style={styles.priceItem}>
+            <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+              {t("purchasePrice")}
+            </ThemedText>
+            <ThemedText type="body" style={[styles.priceValue, { textAlign: "right" }]}>
+              {formatCurrency(item.purchasePrice)}
+            </ThemedText>
+          </View>
+          <View style={styles.priceItem}>
+            <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+              {t("salePrice")}
+            </ThemedText>
+            <ThemedText type="body" style={[styles.priceValue, { color: theme.accent, textAlign: "right" }]}>
+              {formatCurrency(item.salePrice)}
+            </ThemedText>
+          </View>
+          <View style={styles.priceItem}>
+            <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+              {t("unit")}
+            </ThemedText>
+            <ThemedText type="body" style={[styles.priceValue, { textAlign: "right" }]}>
+              {item.unit}
+            </ThemedText>
+          </View>
         </View>
-        <Pressable
-          onPress={() => handleDeleteDrug(item)}
-          style={styles.deleteButton}
-          hitSlop={8}
-        >
-          <Feather name="trash-2" size={18} color={Colors.dark.error} />
-        </Pressable>
-      </View>
-      <View style={styles.priceContainer}>
-        <View style={styles.priceItem}>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            Purchase Price
-          </ThemedText>
-          <ThemedText type="body" style={styles.priceValue}>
-            {formatCurrency(item.purchasePrice)}
-          </ThemedText>
-        </View>
-        <View style={styles.priceItem}>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            Sale Price
-          </ThemedText>
-          <ThemedText type="body" style={[styles.priceValue, { color: Colors.dark.accent }]}>
-            {formatCurrency(item.salePrice)}
-          </ThemedText>
-        </View>
-        <View style={styles.priceItem}>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            Unit
-          </ThemedText>
-          <ThemedText type="body" style={styles.priceValue}>
-            {item.unit}
-          </ThemedText>
-        </View>
-      </View>
-      {item.type ? (
-        <View style={[styles.typeBadge, { backgroundColor: Colors.dark.accent + "20" }]}>
-          <ThemedText type="small" style={{ color: Colors.dark.accent }}>
-            {item.type}
-          </ThemedText>
-        </View>
-      ) : null}
-    </GlassCard>
+        {item.type ? (
+          <View style={[styles.typeBadge, { backgroundColor: theme.accent + "20", alignSelf: "flex-end" }]}>
+            <ThemedText type="small" style={{ color: theme.accent }}>
+              {item.type}
+            </ThemedText>
+          </View>
+        ) : null}
+      </GlassCard>
+    </Animated.View>
   );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+      <View style={[styles.header, styles.headerRTL, { paddingTop: insets.top + Spacing.md }]}>
         <Pressable
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
           style={styles.menuButton}
         >
           <Feather name="menu" size={24} color={theme.text} />
         </Pressable>
-        <ThemedText type="h3">Drugs</ThemedText>
+        <ThemedText type="h3">{t("drugs")}</ThemedText>
         <Pressable onPress={handleAddDrug} style={styles.menuButton}>
-          <Feather name="plus" size={24} color={Colors.dark.accent} />
+          <Feather name="plus" size={24} color={theme.accent} />
         </Pressable>
       </View>
 
@@ -159,15 +164,15 @@ export default function DrugsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.dark.accent}
+            tintColor={theme.accent}
           />
         }
         ListEmptyComponent={
           <EmptyState
             icon="package"
-            title="No Drugs Yet"
-            description="Add your first drug to start managing your inventory."
-            actionLabel="Add Drug"
+            title="هنوز دارویی ثبت نشده"
+            description="اولین دارو را اضافه کنید تا مدیریت موجودی را شروع کنید."
+            actionLabel={t("addDrug")}
             onAction={handleAddDrug}
           />
         }
@@ -187,6 +192,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
   },
+  headerRTL: {
+    flexDirection: "row-reverse",
+  },
   menuButton: {
     width: 44,
     height: 44,
@@ -205,6 +213,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Spacing.md,
   },
+  drugHeaderRTL: {
+    flexDirection: "row-reverse",
+  },
   iconContainer: {
     width: 48,
     height: 48,
@@ -216,6 +227,10 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: Spacing.md,
   },
+  drugInfoRTL: {
+    marginLeft: 0,
+    marginRight: Spacing.md,
+  },
   drugName: {
     fontWeight: "600",
   },
@@ -226,6 +241,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: Spacing.md,
+  },
+  priceContainerRTL: {
+    flexDirection: "row-reverse",
   },
   priceItem: {
     flex: 1,

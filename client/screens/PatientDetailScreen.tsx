@@ -8,12 +8,14 @@ import { FormInput } from "@/components/FormInput";
 import { Button } from "@/components/Button";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, Colors } from "@/constants/theme";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Spacing } from "@/constants/theme";
 import { getPatients, savePatient, updatePatient } from "@/lib/storage";
 import { Patient } from "@/types/models";
 
 export default function PatientDetailScreen() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
@@ -44,9 +46,9 @@ export default function PatientDetailScreen() {
 
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: patientId ? "Edit Patient" : "Add Patient",
+      headerTitle: patientId ? t("editPatient") : t("addPatient"),
     });
-  }, [patientId, navigation]);
+  }, [patientId, navigation, t]);
 
   const loadPatient = async () => {
     const patients = await getPatients();
@@ -72,12 +74,12 @@ export default function PatientDetailScreen() {
 
   const handleSave = async () => {
     if (!form.firstName.trim() || !form.lastName.trim()) {
-      Alert.alert("Error", "First name and last name are required");
+      Alert.alert(t("error"), "نام و نام خانوادگی الزامی است");
       return;
     }
 
     if (!form.nationalId.trim()) {
-      Alert.alert("Error", "National ID is required");
+      Alert.alert(t("error"), "کد ملی الزامی است");
       return;
     }
 
@@ -90,7 +92,7 @@ export default function PatientDetailScreen() {
       }
       navigation.goBack();
     } catch (error) {
-      Alert.alert("Error", "Failed to save patient");
+      Alert.alert(t("error"), "خطا در ذخیره بیمار");
     } finally {
       setLoading(false);
     }
@@ -110,97 +112,109 @@ export default function PatientDetailScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <ThemedText type="h4" style={styles.sectionTitle}>
-          Identity Information
+        <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.accent, textAlign: "right" }]}>
+          {t("identityInformation")}
         </ThemedText>
 
         <FormInput
-          label="First Name"
+          label={t("firstName")}
           value={form.firstName}
           onChangeText={(value) => updateField("firstName", value)}
-          placeholder="Enter first name"
+          placeholder={t("enterFirstName")}
+          rtl={true}
         />
         <FormInput
-          label="Last Name"
+          label={t("lastName")}
           value={form.lastName}
           onChangeText={(value) => updateField("lastName", value)}
-          placeholder="Enter last name"
+          placeholder={t("enterLastName")}
+          rtl={true}
         />
         <FormInput
-          label="National ID"
+          label={t("nationalId")}
           value={form.nationalId}
           onChangeText={(value) => updateField("nationalId", value)}
-          placeholder="Enter national ID"
+          placeholder={t("enterNationalId")}
           keyboardType="numeric"
+          rtl={true}
         />
         <FormInput
-          label="Phone Number"
+          label={t("phone")}
           value={form.phone}
           onChangeText={(value) => updateField("phone", value)}
-          placeholder="Enter phone number"
+          placeholder={t("enterPhone")}
           keyboardType="phone-pad"
+          rtl={true}
         />
         <FormInput
-          label="Address"
+          label={t("address")}
           value={form.address}
           onChangeText={(value) => updateField("address", value)}
-          placeholder="Enter full address"
+          placeholder={t("enterAddress")}
           multiline
+          rtl={true}
         />
         <FormInput
-          label="Date of Birth"
+          label={t("dateOfBirth")}
           value={form.dateOfBirth}
           onChangeText={(value) => updateField("dateOfBirth", value)}
-          placeholder="YYYY-MM-DD"
+          placeholder="۱۳۸۰-۰۱-۰۱"
+          rtl={true}
         />
 
-        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl }]}>
-          Medical Information
+        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl, color: theme.accent, textAlign: "right" }]}>
+          {t("medicalInformation")}
         </ThemedText>
 
         <FormInput
-          label="Main Disease"
+          label={t("mainDisease")}
           value={form.mainDisease}
           onChangeText={(value) => updateField("mainDisease", value)}
-          placeholder="Primary diagnosis"
+          placeholder={t("enterMainDisease")}
+          rtl={true}
         />
         <FormInput
-          label="Background Diseases"
+          label={t("backgroundDiseases")}
           value={form.backgroundDiseases}
           onChangeText={(value) => updateField("backgroundDiseases", value)}
-          placeholder="Other medical conditions"
+          placeholder={t("enterBackgroundDiseases")}
           multiline
+          rtl={true}
         />
         <FormInput
-          label="Medical Description"
+          label={t("medicalDescription")}
           value={form.medicalDescription}
           onChangeText={(value) => updateField("medicalDescription", value)}
-          placeholder="Detailed medical notes"
+          placeholder={t("enterMedicalDescription")}
           multiline
+          rtl={true}
         />
         <FormInput
-          label="Treatment Plan"
+          label={t("treatmentPlan")}
           value={form.treatmentPlan}
           onChangeText={(value) => updateField("treatmentPlan", value)}
-          placeholder="Treatment approach"
+          placeholder={t("enterTreatmentPlan")}
           multiline
+          rtl={true}
         />
         <FormInput
-          label="Treatment Duration"
+          label={t("treatmentDuration")}
           value={form.treatmentDuration}
           onChangeText={(value) => updateField("treatmentDuration", value)}
-          placeholder="e.g., 3 months"
+          placeholder={t("enterTreatmentDuration")}
+          rtl={true}
         />
         <FormInput
-          label="Doctor Notes"
+          label={t("doctorNotes")}
           value={form.doctorNotes}
           onChangeText={(value) => updateField("doctorNotes", value)}
-          placeholder="Additional notes"
+          placeholder={t("enterDoctorNotes")}
           multiline
+          rtl={true}
         />
 
         <Button onPress={handleSave} loading={loading} style={styles.saveButton}>
-          {patientId ? "Update Patient" : "Add Patient"}
+          {patientId ? t("updatePatient") : t("addPatient")}
         </Button>
       </KeyboardAwareScrollViewCompat>
     </View>
@@ -220,7 +234,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginBottom: Spacing.lg,
-    color: Colors.dark.accent,
   },
   saveButton: {
     marginTop: Spacing.xl,

@@ -1,14 +1,16 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { View, StyleSheet, ScrollView, Pressable, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation, DrawerActions, useFocusEffect } from "@react-navigation/native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
 import { GlassCard } from "@/components/GlassCard";
 import { StatCard } from "@/components/StatCard";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import { getSales, getPatients, getInstallments } from "@/lib/storage";
 
 interface ReportStats {
@@ -21,8 +23,14 @@ interface ReportStats {
   monthlyData: { month: string; amount: number }[];
 }
 
+const persianMonths = [
+  "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
+  "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"
+];
+
 export default function ReportsScreen() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
@@ -78,7 +86,7 @@ export default function ReportsScreen() {
           })
           .reduce((sum, s) => sum + s.totalPrice, 0);
         monthlyData.push({
-          month: monthStart.toLocaleDateString("en-US", { month: "short" }),
+          month: persianMonths[monthStart.getMonth()],
           amount: monthSales,
         });
       }
@@ -110,21 +118,21 @@ export default function ReportsScreen() {
   };
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString() + " T";
+    return amount.toLocaleString("fa-IR") + " " + t("toman");
   };
 
   const maxAmount = Math.max(...stats.monthlyData.map((d) => d.amount), 1);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+      <View style={[styles.header, styles.headerRTL, { paddingTop: insets.top + Spacing.md }]}>
         <Pressable
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
           style={styles.menuButton}
         >
           <Feather name="menu" size={24} color={theme.text} />
         </Pressable>
-        <ThemedText type="h3">Reports</ThemedText>
+        <ThemedText type="h3">{t("reports")}</ThemedText>
         <View style={styles.menuButton} />
       </View>
 
@@ -139,79 +147,83 @@ export default function ReportsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.dark.accent}
+            tintColor={theme.accent}
           />
         }
       >
-        <View style={styles.statsGrid}>
-          <View style={styles.statsRow}>
-            <StatCard
-              title="Total Sales"
-              value={formatCurrency(stats.totalSales)}
-              icon="trending-up"
-              trend="up"
-            />
-            <View style={styles.statSpacer} />
-            <StatCard
-              title="Total Debt"
-              value={formatCurrency(stats.totalDebt)}
-              icon="alert-circle"
-              trend={stats.totalDebt > 0 ? "down" : "neutral"}
-            />
+        <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+          <View style={styles.statsGrid}>
+            <View style={[styles.statsRow, styles.statsRowRTL]}>
+              <StatCard
+                title={t("totalSales")}
+                value={formatCurrency(stats.totalSales)}
+                icon="trending-up"
+                trend="up"
+              />
+              <View style={styles.statSpacer} />
+              <StatCard
+                title={t("debtBalance")}
+                value={formatCurrency(stats.totalDebt)}
+                icon="alert-circle"
+                trend={stats.totalDebt > 0 ? "down" : "neutral"}
+              />
+            </View>
+            <View style={[styles.statsRow, styles.statsRowRTL]}>
+              <StatCard
+                title={t("monthlySales")}
+                value={formatCurrency(stats.monthlySales)}
+                icon="calendar"
+              />
+              <View style={styles.statSpacer} />
+              <StatCard
+                title="فروش سالانه"
+                value={formatCurrency(stats.yearlySales)}
+                icon="bar-chart-2"
+              />
+            </View>
+            <View style={[styles.statsRow, styles.statsRowRTL]}>
+              <StatCard
+                title={t("bottlesSold")}
+                value={stats.bottlesSold.toLocaleString("fa-IR")}
+                icon="package"
+              />
+              <View style={styles.statSpacer} />
+              <StatCard
+                title={t("patientsWithDebt")}
+                value={stats.patientsWithDebt.toLocaleString("fa-IR")}
+                icon="user-x"
+              />
+            </View>
           </View>
-          <View style={styles.statsRow}>
-            <StatCard
-              title="Monthly Sales"
-              value={formatCurrency(stats.monthlySales)}
-              icon="calendar"
-            />
-            <View style={styles.statSpacer} />
-            <StatCard
-              title="Yearly Sales"
-              value={formatCurrency(stats.yearlySales)}
-              icon="bar-chart-2"
-            />
-          </View>
-          <View style={styles.statsRow}>
-            <StatCard
-              title="Bottles Sold"
-              value={stats.bottlesSold}
-              icon="package"
-            />
-            <View style={styles.statSpacer} />
-            <StatCard
-              title="Patients with Debt"
-              value={stats.patientsWithDebt}
-              icon="user-x"
-            />
-          </View>
-        </View>
+        </Animated.View>
 
-        <GlassCard title="Monthly Sales Trend" style={styles.chartCard}>
-          <View style={styles.chart}>
-            {stats.monthlyData.map((data, index) => (
-              <View key={index} style={styles.chartBar}>
-                <View style={styles.barContainer}>
-                  <View
-                    style={[
-                      styles.bar,
-                      {
-                        height: `${(data.amount / maxAmount) * 100}%`,
-                        backgroundColor: Colors.dark.accent,
-                      },
-                    ]}
-                  />
+        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+          <GlassCard title="روند فروش ماهانه" style={styles.chartCard}>
+            <View style={[styles.chart, styles.chartRTL]}>
+              {stats.monthlyData.map((data, index) => (
+                <View key={index} style={styles.chartBar}>
+                  <View style={styles.barContainer}>
+                    <View
+                      style={[
+                        styles.bar,
+                        {
+                          height: `${(data.amount / maxAmount) * 100}%`,
+                          backgroundColor: theme.accent,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <ThemedText
+                    type="small"
+                    style={[styles.barLabel, { color: theme.textSecondary }]}
+                  >
+                    {data.month}
+                  </ThemedText>
                 </View>
-                <ThemedText
-                  type="small"
-                  style={[styles.barLabel, { color: theme.textSecondary }]}
-                >
-                  {data.month}
-                </ThemedText>
-              </View>
-            ))}
-          </View>
-        </GlassCard>
+              ))}
+            </View>
+          </GlassCard>
+        </Animated.View>
       </ScrollView>
     </View>
   );
@@ -227,6 +239,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
+  },
+  headerRTL: {
+    flexDirection: "row-reverse",
   },
   menuButton: {
     width: 44,
@@ -248,6 +263,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginBottom: Spacing.md,
   },
+  statsRowRTL: {
+    flexDirection: "row-reverse",
+  },
   statSpacer: {
     width: Spacing.md,
   },
@@ -260,6 +278,9 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     height: 150,
     marginTop: Spacing.lg,
+  },
+  chartRTL: {
+    flexDirection: "row-reverse",
   },
   chartBar: {
     flex: 1,
