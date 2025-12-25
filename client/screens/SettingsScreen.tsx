@@ -23,7 +23,7 @@ export default function SettingsScreen() {
   const handleAbout = () => {
     Alert.alert(
       `${t("about")} ${t("appName")}`,
-      `${t("appName")} ${t("version")} 1.0.0\n\n${t("appDescription")}`,
+      `${t("appName")} ${t("version")} 1.0.0\n\n${t("appDescription")}\n\n${t("madeWithLove")} ❤️`,
       [{ text: t("confirm") }]
     );
   };
@@ -119,6 +119,9 @@ export default function SettingsScreen() {
             <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center" }}>
               {t("patientDrugManagement")}
             </ThemedText>
+            <ThemedText type="small" style={[styles.madeWith, { color: theme.accent }]}>
+              {t("madeWithLove")} ❤️
+            </ThemedText>
             <ThemedText type="small" style={[styles.version, { color: theme.textSecondary }]}>
               {t("version")} 1.0.0
             </ThemedText>
@@ -212,7 +215,10 @@ const styles = StyleSheet.create({
   appName: {
     marginBottom: Spacing.xs,
   },
+  madeWith: {
+    marginTop: Spacing.lg,
+  },
   version: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
   },
 });

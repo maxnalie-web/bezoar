@@ -9,7 +9,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 const translations: Record<string, string> = {
-  appName: "بزوار",
+  appName: "Bezoar",
   dashboard: "داشبورد",
   patients: "بیماران",
   drugs: "داروها",
@@ -24,7 +24,8 @@ const translations: Record<string, string> = {
   newSale: "فروش جدید",
   editSale: "ویرایش فروش",
   totalPatients: "کل بیماران",
-  bottlesSold: "بطری فروخته شده",
+  bottlesSold: "واحد فروخته شده",
+  unitsSold: "فروخته شده",
   totalSales: "کل فروش",
   debtBalance: "مانده بدهی",
   patientsWithDebt: "بیماران بدهکار",
@@ -138,6 +139,7 @@ const translations: Record<string, string> = {
   general: "عمومی",
   about: "درباره",
   version: "نسخه",
+  madeWithLove: "ساخته شد با عشق برای سیروس و اشرفی",
   dataManagement: "مدیریت داده",
   clearAllData: "پاک کردن همه داده‌ها",
   areYouSure: "آیا مطمئن هستید؟",

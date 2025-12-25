@@ -62,7 +62,7 @@ export function FormInput({
             style,
           ]}
           placeholderTextColor={theme.textSecondary}
-          textAlign={rtl ? "right" : "left"}
+          textAlign="center"
           {...props}
         />
         {icon ? (

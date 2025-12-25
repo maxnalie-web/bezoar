@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 const neonPurple = "#A855F7";
 const neonPurpleLight = "#C084FC";
 const neonPurpleDark = "#7C3AED";
+const neonPurpleGlow = "#D8B4FE";
 
 export const Colors = {
   light: {
@@ -15,37 +16,41 @@ export const Colors = {
     accent: neonPurple,
     accentLight: neonPurpleLight,
     accentDark: neonPurpleDark,
-    backgroundRoot: "#FFFFFF",
-    backgroundDefault: "#F2F2F2",
-    backgroundSecondary: "#E6E6E6",
-    backgroundTertiary: "#D9D9D9",
-    glass: "rgba(255, 255, 255, 0.7)",
-    glassBorder: "rgba(255, 255, 255, 0.3)",
-    success: "#22C55E",
+    accentGlow: neonPurpleGlow,
+    backgroundRoot: "#F8F9FA",
+    backgroundDefault: "#FFFFFF",
+    backgroundSecondary: "#F0F0F3",
+    backgroundTertiary: "#E5E5E8",
+    glass: "rgba(255, 255, 255, 0.85)",
+    glassBorder: "rgba(168, 85, 247, 0.15)",
+    success: "#10B981",
     warning: "#F59E0B",
     error: "#EF4444",
-    cardShadow: "rgba(0, 0, 0, 0.1)",
+    cardShadow: "rgba(0, 0, 0, 0.08)",
+    gradient: ["#F8F9FA", "#EDE9FE"],
   },
   dark: {
-    text: "#ECEDEE",
-    textSecondary: "#9BA1A6",
+    text: "#F1F5F9",
+    textSecondary: "#94A3B8",
     buttonText: "#FFFFFF",
-    tabIconDefault: "#9BA1A6",
+    tabIconDefault: "#94A3B8",
     tabIconSelected: neonPurple,
-    link: neonPurple,
+    link: neonPurpleLight,
     accent: neonPurple,
     accentLight: neonPurpleLight,
     accentDark: neonPurpleDark,
-    backgroundRoot: "#0D0D12",
-    backgroundDefault: "#16161D",
-    backgroundSecondary: "#1E1E28",
-    backgroundTertiary: "#262632",
-    glass: "rgba(30, 30, 40, 0.7)",
-    glassBorder: "rgba(168, 85, 247, 0.2)",
-    success: "#22C55E",
+    accentGlow: neonPurpleGlow,
+    backgroundRoot: "#0A0A0F",
+    backgroundDefault: "#12121A",
+    backgroundSecondary: "#1A1A25",
+    backgroundTertiary: "#232330",
+    glass: "rgba(18, 18, 26, 0.85)",
+    glassBorder: "rgba(168, 85, 247, 0.25)",
+    success: "#10B981",
     warning: "#F59E0B",
     error: "#EF4444",
-    cardShadow: "rgba(0, 0, 0, 0.4)",
+    cardShadow: "rgba(168, 85, 247, 0.1)",
+    gradient: ["#0A0A0F", "#1A0A25"],
   },
 };
 
@@ -59,8 +64,8 @@ export const Spacing = {
   "3xl": 32,
   "4xl": 40,
   "5xl": 48,
-  inputHeight: 48,
-  buttonHeight: 52,
+  inputHeight: 52,
+  buttonHeight: 54,
   sidebarWidth: 72,
   sidebarExpandedWidth: 240,
 };
@@ -78,59 +83,97 @@ export const BorderRadius = {
 
 export const Typography = {
   h1: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: "700" as const,
+    letterSpacing: -0.5,
   },
   h2: {
     fontSize: 28,
     fontWeight: "700" as const,
+    letterSpacing: -0.3,
   },
   h3: {
     fontSize: 24,
     fontWeight: "600" as const,
+    letterSpacing: -0.2,
   },
   h4: {
     fontSize: 20,
     fontWeight: "600" as const,
+    letterSpacing: -0.1,
   },
   body: {
     fontSize: 16,
     fontWeight: "400" as const,
+    lineHeight: 24,
   },
   small: {
     fontSize: 14,
     fontWeight: "400" as const,
+    lineHeight: 20,
   },
   link: {
     fontSize: 16,
-    fontWeight: "400" as const,
+    fontWeight: "500" as const,
   },
 };
 
 export const Fonts = Platform.select({
   ios: {
-    sans: "system-ui",
-    serif: "ui-serif",
-    rounded: "ui-rounded",
-    mono: "ui-monospace",
+    sans: "Vazirmatn-Regular",
+    medium: "Vazirmatn-Medium",
+    bold: "Vazirmatn-Bold",
+  },
+  android: {
+    sans: "Vazirmatn-Regular",
+    medium: "Vazirmatn-Medium",
+    bold: "Vazirmatn-Bold",
   },
   default: {
-    sans: "normal",
-    serif: "serif",
-    rounded: "normal",
-    mono: "monospace",
+    sans: "Vazirmatn-Regular",
+    medium: "Vazirmatn-Medium",
+    bold: "Vazirmatn-Bold",
   },
   web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded:
-      "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    sans: "'Vazirmatn', 'Tahoma', sans-serif",
+    medium: "'Vazirmatn', 'Tahoma', sans-serif",
+    bold: "'Vazirmatn', 'Tahoma', sans-serif",
   },
 });
 
 export const GlassStyles = {
-  blur: 20,
-  opacity: 0.7,
+  blur: 25,
+  opacity: 0.85,
   borderWidth: 1,
+};
+
+export const Shadows = {
+  sm: {
+    shadowColor: "#A855F7",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: "#A855F7",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: "#A855F7",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  glow: {
+    shadowColor: "#A855F7",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
 };

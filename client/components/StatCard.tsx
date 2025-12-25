@@ -1,11 +1,12 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { GlassCard } from "@/components/GlassCard";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 interface StatCardProps {
   title: string;
@@ -16,7 +17,7 @@ interface StatCardProps {
 }
 
 export function StatCard({ title, value, icon, trend, onPress }: StatCardProps) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
 
   const getTrendColor = () => {
     switch (trend) {
@@ -30,25 +31,31 @@ export function StatCard({ title, value, icon, trend, onPress }: StatCardProps) 
   };
 
   return (
-    <GlassCard onPress={onPress} style={styles.card}>
+    <GlassCard onPress={onPress} style={styles.card} elevated>
       <View style={[styles.header, styles.headerRTL]}>
-        <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: theme.accent + "20" },
-          ]}
-        >
-          <Feather name={icon} size={20} color={theme.accent} />
+        <View style={styles.iconWrapper}>
+          <LinearGradient
+            colors={isDark 
+              ? ["rgba(168, 85, 247, 0.25)", "rgba(124, 58, 237, 0.15)"]
+              : ["rgba(168, 85, 247, 0.15)", "rgba(124, 58, 237, 0.08)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.iconContainer}
+          >
+            <Feather name={icon} size={22} color={theme.accent} />
+          </LinearGradient>
         </View>
         {trend ? (
-          <Feather
-            name={trend === "up" ? "trending-up" : trend === "down" ? "trending-down" : "minus"}
-            size={16}
-            color={getTrendColor()}
-          />
+          <View style={[styles.trendBadge, { backgroundColor: getTrendColor() + "20" }]}>
+            <Feather
+              name={trend === "up" ? "trending-up" : trend === "down" ? "trending-down" : "minus"}
+              size={14}
+              color={getTrendColor()}
+            />
+          </View>
         ) : null}
       </View>
-      <ThemedText type="h3" style={[styles.value, styles.valueRTL]}>
+      <ThemedText type="h3" style={[styles.value, styles.valueRTL, { color: theme.text }]}>
         {value}
       </ThemedText>
       <ThemedText
@@ -75,15 +82,28 @@ const styles = StyleSheet.create({
   headerRTL: {
     flexDirection: "row-reverse",
   },
+  iconWrapper: {
+    ...Platform.select({
+      ios: Shadows.glow,
+      android: {},
+      default: {},
+    }),
+  },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.sm,
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
   },
+  trendBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
+  },
   value: {
     marginBottom: Spacing.xs,
+    letterSpacing: -0.5,
   },
   valueRTL: {
     textAlign: "right",
