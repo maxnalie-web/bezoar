@@ -27,7 +27,7 @@ export default function DrugDetailScreen() {
     type: "",
     purchasePrice: "",
     salePrice: "",
-    unit: t("bottle"),
+    unit: "بطری",
     description: "",
   });
 

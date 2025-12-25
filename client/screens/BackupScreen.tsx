@@ -15,7 +15,7 @@ import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { getAllData, restoreData, clearAllData } from "@/lib/storage";
+import { getAllData, restoreData } from "@/lib/storage";
 
 export default function BackupScreen() {
   const { theme } = useTheme();
@@ -178,37 +178,6 @@ export default function BackupScreen() {
     }
   };
 
-  const handleClearData = () => {
-    Alert.alert(
-      t("clearAllData"),
-      t("areYouSure") + " " + t("thisCannotBeUndone"),
-      [
-        { text: t("cancel"), style: "cancel" },
-        {
-          text: t("delete"),
-          style: "destructive",
-          onPress: () => {
-            Alert.alert(
-              t("confirmDelete"),
-              t("deleteConfirmMessage"),
-              [
-                { text: t("cancel"), style: "cancel" },
-                {
-                  text: t("confirm"),
-                  style: "destructive",
-                  onPress: async () => {
-                    await clearAllData();
-                    Alert.alert(t("success"), t("allDataDeleted"));
-                  },
-                },
-              ]
-            );
-          },
-        },
-      ]
-    );
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <View style={[styles.header, styles.headerRTL, { paddingTop: insets.top + Spacing.md }]}>
@@ -309,32 +278,6 @@ export default function BackupScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-          <GlassCard style={styles.section}>
-            <View style={[styles.sectionHeader, styles.sectionHeaderRTL]}>
-              <View style={[styles.iconContainer, { backgroundColor: theme.error + "20" }]}>
-                <Feather name="trash-2" size={24} color={theme.error} />
-              </View>
-              <View style={[styles.sectionInfo, styles.sectionInfoRTL]}>
-                <ThemedText type="h4" style={{ textAlign: "right" }}>
-                  {t("resetDatabase")}
-                </ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
-                  {t("deleteAllDataPermanently")}
-                </ThemedText>
-              </View>
-            </View>
-            <Button
-              onPress={handleClearData}
-              variant="danger"
-              icon="alert-triangle"
-              style={styles.actionButton}
-            >
-              {t("clearAllData")}
-            </Button>
-          </GlassCard>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(400).duration(400)}>
           <GlassCard style={[styles.infoCard, styles.infoCardRTL]}>
             <Feather name="info" size={20} color={theme.textSecondary} />
             <ThemedText type="small" style={[styles.infoText, { color: theme.textSecondary }, styles.infoTextRTL]}>

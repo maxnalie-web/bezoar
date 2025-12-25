@@ -7,10 +7,11 @@ import Animated, {
   withSpring,
   WithSpringConfig,
 } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { Spacing, BorderRadius, Colors, Shadows } from "@/constants/theme";
 
 interface GlassCardProps {
   title?: string;
@@ -19,12 +20,13 @@ interface GlassCardProps {
   onPress?: () => void;
   style?: ViewStyle;
   noPadding?: boolean;
+  elevated?: boolean;
 }
 
 const springConfig: WithSpringConfig = {
-  damping: 15,
-  mass: 0.3,
-  stiffness: 150,
+  damping: 18,
+  mass: 0.4,
+  stiffness: 180,
   overshootClamping: true,
   energyThreshold: 0.001,
 };
@@ -38,6 +40,7 @@ export function GlassCard({
   onPress,
   style,
   noPadding = false,
+  elevated = false,
 }: GlassCardProps) {
   const { theme, isDark } = useTheme();
   const scale = useSharedValue(1);
@@ -48,7 +51,7 @@ export function GlassCard({
 
   const handlePressIn = () => {
     if (onPress) {
-      scale.value = withSpring(0.98, springConfig);
+      scale.value = withSpring(0.97, springConfig);
     }
   };
 
@@ -78,18 +81,34 @@ export function GlassCard({
   const containerStyle = [
     styles.card,
     !noPadding && styles.cardPadding,
-    { borderColor: isDark ? Colors.dark.glassBorder : Colors.light.glassBorder },
+    { 
+      borderColor: isDark ? Colors.dark.glassBorder : Colors.light.glassBorder,
+    },
+    elevated && Platform.OS === "ios" && Shadows.md,
     style,
   ];
 
   const renderBackground = () => {
     if (Platform.OS === "ios") {
       return (
-        <BlurView
-          intensity={40}
-          tint={isDark ? "dark" : "light"}
-          style={[StyleSheet.absoluteFill, styles.blurView]}
-        />
+        <>
+          <BlurView
+            intensity={isDark ? 50 : 60}
+            tint={isDark ? "dark" : "light"}
+            style={[StyleSheet.absoluteFill, styles.blurView]}
+          />
+          <View 
+            style={[
+              StyleSheet.absoluteFill, 
+              styles.blurView, 
+              { 
+                backgroundColor: isDark 
+                  ? "rgba(168, 85, 247, 0.03)" 
+                  : "rgba(168, 85, 247, 0.02)" 
+              }
+            ]} 
+          />
+        </>
       );
     }
     return (
@@ -97,9 +116,23 @@ export function GlassCard({
         style={[
           StyleSheet.absoluteFill,
           styles.blurView,
-          { backgroundColor: theme.backgroundDefault },
+          { 
+            backgroundColor: isDark 
+              ? theme.backgroundDefault 
+              : theme.backgroundDefault,
+            borderWidth: 0,
+          },
         ]}
-      />
+      >
+        <LinearGradient
+          colors={isDark 
+            ? ["rgba(168, 85, 247, 0.08)", "rgba(168, 85, 247, 0.02)"] 
+            : ["rgba(168, 85, 247, 0.04)", "rgba(168, 85, 247, 0.01)"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
     );
   };
 
@@ -128,7 +161,7 @@ export function GlassCard({
 const styles = StyleSheet.create({
   card: {
     borderRadius: BorderRadius.lg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     overflow: "hidden",
   },
   cardPadding: {

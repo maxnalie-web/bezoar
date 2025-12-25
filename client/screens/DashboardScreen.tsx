@@ -15,7 +15,9 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Spacing } from "@/constants/theme";
 import { getPatients, getDrugs, getSales, getInstallments } from "@/lib/storage";
-import { Patient, Sale, DashboardStats } from "@/types/models";
+import { Patient, Sale, Drug, DashboardStats } from "@/types/models";
+
+type SaleWithUnit = Sale & { drugUnit: string };
 
 export default function DashboardScreen() {
   const { theme } = useTheme();
@@ -32,7 +34,7 @@ export default function DashboardScreen() {
     monthlySales: 0,
   });
   const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
-  const [recentSales, setRecentSales] = useState<Sale[]>([]);
+  const [recentSales, setRecentSales] = useState<SaleWithUnit[]>([]);
 
   const loadData = async () => {
     try {
@@ -42,6 +44,8 @@ export default function DashboardScreen() {
         getSales(),
         getInstallments(),
       ]);
+
+      const drugsMap = new Map(drugs.map((d) => [d.id, d]));
 
       const totalSales = sales.reduce((sum, s) => sum + s.totalPrice, 0);
       const unpaidInstallments = installments.filter((i) => i.status === "unpaid");
@@ -74,8 +78,21 @@ export default function DashboardScreen() {
       setRecentPatients(
         patients.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3)
       );
+
+      const salesWithUnit: SaleWithUnit[] = sales.map((sale) => {
+        const drug = drugsMap.get(sale.drugId);
+        return {
+          ...sale,
+          drugUnit: drug?.unit || "واحد",
+        };
+      });
+
       setRecentSales(
-        sales.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3)
+        salesWithUnit.sort((a, b) => {
+          const dateA = new Date(b.purchaseDate || b.createdAt).getTime();
+          const dateB = new Date(a.purchaseDate || a.createdAt).getTime();
+          return dateA - dateB;
+        }).slice(0, 3)
       );
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
@@ -237,7 +254,7 @@ export default function DashboardScreen() {
               recentSales.map((sale) => (
                 <ListItem
                   key={sale.id}
-                  title={`${sale.bottleCount.toLocaleString("fa-IR")} ${t("bottle")}`}
+                  title={`${sale.bottleCount.toLocaleString("fa-IR")} ${sale.drugUnit}`}
                   subtitle={formatCurrency(sale.totalPrice)}
                   leftIcon="shopping-cart"
                   badge={getPaymentStatusLabel(sale.paymentStatus)}

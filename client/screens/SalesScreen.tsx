@@ -17,6 +17,7 @@ import { Sale, Patient, Drug } from "@/types/models";
 type SaleWithDetails = Sale & {
   patientName: string;
   drugName: string;
+  drugUnit: string;
 };
 
 export default function SalesScreen() {
@@ -46,12 +47,13 @@ export default function SalesScreen() {
           ...sale,
           patientName: patient ? `${patient.firstName} ${patient.lastName}` : "ناشناس",
           drugName: drug ? drug.name : "ناشناس",
+          drugUnit: drug ? drug.unit : "واحد",
         };
       });
 
       setSales(
         salesWithDetails.sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          (a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime()
         )
       );
     } catch (error) {
@@ -147,7 +149,7 @@ export default function SalesScreen() {
               {item.patientName}
             </ThemedText>
             <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
-              {item.drugName} - {item.bottleCount.toLocaleString("fa-IR")} {t("bottle")}
+              {item.drugName} - {item.bottleCount.toLocaleString("fa-IR")} {item.drugUnit}
             </ThemedText>
           </View>
           <Pressable
