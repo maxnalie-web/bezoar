@@ -12,10 +12,12 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInRight, FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
+import { Image } from "expo-image";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import AppLogo from "@assets/images/logo.png";
 
 import DashboardScreen from "@/screens/DashboardScreen";
 import PatientsScreen from "@/screens/PatientsScreen";
@@ -82,9 +84,11 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
             entering={FadeIn.duration(500)}
             style={styles.logoContainer}
           >
-            <View style={[styles.logoIcon, { backgroundColor: theme.accent + "20" }]}>
-              <Feather name="activity" size={22} color={theme.accent} />
-            </View>
+            <Image 
+              source={AppLogo} 
+              style={styles.logoImage}
+              contentFit="contain"
+            />
             <ThemedText type="h4" style={styles.appName}>
               {t("appName")}
             </ThemedText>
@@ -209,6 +213,10 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
+  },
+  logoImage: {
+    width: 48,
+    height: 48,
   },
   appName: {
     marginRight: Spacing.md,
