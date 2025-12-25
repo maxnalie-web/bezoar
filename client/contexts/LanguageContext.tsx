@@ -217,6 +217,13 @@ const translations: Record<string, string> = {
   stock: "موجودی",
   addStock: "افزودن موجودی",
   removeStock: "کاهش موجودی",
+  smartRestoreInfo: "فقط داده‌های جدید اضافه می‌شود و موارد تکراری نادیده گرفته می‌شوند.",
+  noNewDataToRestore: "همه داده‌ها از قبل موجود است. موردی اضافه نشد.",
+  newPatient: "بیمار جدید",
+  newDrug: "دارو جدید",
+  newSale: "فروش جدید",
+  newInstallment: "قسط جدید",
+  dataRestored: "داده‌ها بازیابی شد",
 };
 
 if (!I18nManager.isRTL) {

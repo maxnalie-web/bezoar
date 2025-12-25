@@ -160,15 +160,15 @@ export function GlassCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1.5,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
     overflow: "hidden",
   },
   cardPadding: {
     padding: Spacing.lg,
   },
   blurView: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
   },
   cardTitle: {
     marginBottom: Spacing.xs,
