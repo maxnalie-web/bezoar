@@ -73,16 +73,6 @@ export default function PatientDetailScreen() {
   };
 
   const handleSave = async () => {
-    if (!form.firstName.trim() || !form.lastName.trim()) {
-      Alert.alert(t("error"), "نام و نام خانوادگی الزامی است");
-      return;
-    }
-
-    if (!form.nationalId.trim()) {
-      Alert.alert(t("error"), "کد ملی الزامی است");
-      return;
-    }
-
     setLoading(true);
     try {
       if (patientId) {

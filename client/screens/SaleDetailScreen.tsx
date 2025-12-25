@@ -91,18 +91,7 @@ export default function SaleDetailScreen() {
   };
 
   const handleSave = async () => {
-    if (!selectedPatient) {
-      Alert.alert(t("error"), "لطفاً یک بیمار انتخاب کنید");
-      return;
-    }
-
-    if (!selectedDrug) {
-      Alert.alert(t("error"), "لطفاً یک دارو انتخاب کنید");
-      return;
-    }
-
-    if (!form.bottleCount || parseInt(form.bottleCount) <= 0) {
-      Alert.alert(t("error"), "لطفاً تعداد بطری معتبر وارد کنید");
+    if (!selectedPatient || !selectedDrug) {
       return;
     }
 

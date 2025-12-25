@@ -92,11 +92,17 @@ export default function DrugsScreen() {
             </ThemedText>
           </View>
           <Pressable
-            onPress={() => handleDeleteDrug(item)}
-            style={styles.deleteButton}
-            hitSlop={8}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleDeleteDrug(item);
+            }}
+            style={({ pressed }) => [
+              styles.deleteButton,
+              { opacity: pressed ? 0.6 : 1 },
+            ]}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <Feather name="trash-2" size={18} color={theme.error} />
+            <Feather name="trash-2" size={20} color={theme.error} />
           </Pressable>
         </View>
         <View style={[styles.priceContainer, styles.priceContainerRTL]}>
@@ -235,7 +241,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   deleteButton: {
-    padding: Spacing.sm,
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: BorderRadius.sm,
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
   },
   priceContainer: {
     flexDirection: "row",
