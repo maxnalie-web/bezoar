@@ -12,13 +12,13 @@ import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import Animated, { FadeInLeft, FadeInRight, FadeIn } from "react-native-reanimated";
+import Animated, { FadeInRight, FadeIn } from "react-native-reanimated";
 
 import AppIcon from "@assets/images/icon.png";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 
 import DashboardScreen from "@/screens/DashboardScreen";
 import PatientsScreen from "@/screens/PatientsScreen";
@@ -58,7 +58,7 @@ const Drawer = createDrawerNavigator<DrawerParamList>();
 
 function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps) {
   const { theme, isDark } = useTheme();
-  const { t, isRTL } = useLanguage();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const currentRoute = state.routes[state.index].name;
 
@@ -95,33 +95,31 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
       >
         <Animated.View 
           entering={FadeIn.duration(500)}
-          style={[styles.logoContainer, isRTL && styles.logoContainerRTL]}
+          style={styles.logoContainer}
         >
+          <ThemedText type="h4" style={styles.appName}>
+            {t("appName")}
+          </ThemedText>
           <Image
             source={AppIcon}
             style={styles.logo}
             contentFit="contain"
           />
-          <ThemedText type="h4" style={[styles.appName, isRTL && styles.appNameRTL]}>
-            {t("appName")}
-          </ThemedText>
         </Animated.View>
 
         <View style={[styles.divider, { backgroundColor: theme.glassBorder }]} />
 
         {drawerItems.map((item, index) => {
           const isActive = currentRoute === item.name;
-          const EnterAnimation = isRTL ? FadeInRight : FadeInLeft;
           return (
             <Animated.View
               key={item.name}
-              entering={EnterAnimation.delay(index * 50).duration(400)}
+              entering={FadeInRight.delay(index * 50).duration(400)}
             >
               <Pressable
                 onPress={() => navigation.navigate(item.name)}
                 style={({ pressed }) => [
                   styles.drawerItem,
-                  isRTL && styles.drawerItemRTL,
                   isActive && [
                     styles.drawerItemActive,
                     { backgroundColor: theme.accent + "20" },
@@ -129,7 +127,7 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
                   pressed && styles.drawerItemPressed,
                 ]}
               >
-                {isActive && !isRTL ? (
+                {isActive ? (
                   <View
                     style={[
                       styles.activeIndicator,
@@ -137,28 +135,19 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
                     ]}
                   />
                 ) : null}
-                <Feather
-                  name={item.icon}
-                  size={22}
-                  color={isActive ? theme.accent : theme.textSecondary}
-                />
                 <ThemedText
                   style={[
                     styles.drawerItemLabel,
-                    isRTL && styles.drawerItemLabelRTL,
                     { color: isActive ? theme.accent : theme.text },
                   ]}
                 >
                   {t(item.labelKey)}
                 </ThemedText>
-                {isActive && isRTL ? (
-                  <View
-                    style={[
-                      styles.activeIndicatorRTL,
-                      { backgroundColor: theme.accent },
-                    ]}
-                  />
-                ) : null}
+                <Feather
+                  name={item.icon}
+                  size={22}
+                  color={isActive ? theme.accent : theme.textSecondary}
+                />
               </Pressable>
             </Animated.View>
           );
@@ -170,7 +159,6 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
 
 export default function DrawerNavigator() {
   const { theme, isDark } = useTheme();
-  const { isRTL } = useLanguage();
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768;
 
@@ -180,7 +168,7 @@ export default function DrawerNavigator() {
       screenOptions={{
         headerShown: false,
         drawerType: isLargeScreen ? "permanent" : "front",
-        drawerPosition: isRTL ? "right" : "left",
+        drawerPosition: "right",
         drawerStyle: {
           width: Spacing.sidebarExpandedWidth,
           backgroundColor: "transparent",
@@ -213,13 +201,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   logoContainer: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     marginBottom: Spacing.xl,
     paddingHorizontal: Spacing.md,
-  },
-  logoContainerRTL: {
-    flexDirection: "row-reverse",
   },
   logo: {
     width: 40,
@@ -227,10 +212,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
   },
   appName: {
-    marginLeft: Spacing.md,
-  },
-  appNameRTL: {
-    marginLeft: 0,
     marginRight: Spacing.md,
   },
   divider: {
@@ -238,16 +219,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   drawerItem: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.sm,
     marginBottom: Spacing.xs,
     position: "relative",
-  },
-  drawerItemRTL: {
-    flexDirection: "row-reverse",
   },
   drawerItemActive: {
     borderRadius: BorderRadius.sm,
@@ -256,23 +234,13 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   drawerItemLabel: {
-    marginLeft: Spacing.md,
+    marginRight: Spacing.md,
     fontSize: 15,
     fontWeight: "500",
-  },
-  drawerItemLabelRTL: {
-    marginLeft: 0,
-    marginRight: Spacing.md,
+    flex: 1,
+    textAlign: "right",
   },
   activeIndicator: {
-    position: "absolute",
-    left: 0,
-    top: "25%",
-    bottom: "25%",
-    width: 3,
-    borderRadius: BorderRadius.full,
-  },
-  activeIndicatorRTL: {
     position: "absolute",
     right: 0,
     top: "25%",

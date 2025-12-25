@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation, DrawerActions } from "@react-navigation/native";
 import { Image } from "expo-image";
+import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 
 import AppIcon from "@assets/images/icon.png";
 import { ThemedText } from "@/components/ThemedText";
@@ -11,12 +12,14 @@ import { StatCard } from "@/components/StatCard";
 import { GlassCard } from "@/components/GlassCard";
 import { ListItem } from "@/components/ListItem";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, Colors } from "@/constants/theme";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Spacing } from "@/constants/theme";
 import { getPatients, getDrugs, getSales, getInstallments } from "@/lib/storage";
 import { Patient, Sale, DashboardStats } from "@/types/models";
 
 export default function DashboardScreen() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
@@ -92,25 +95,34 @@ export default function DashboardScreen() {
   };
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString() + " T";
+    return amount.toLocaleString("fa-IR") + " " + t("toman");
+  };
+
+  const getPaymentStatusLabel = (status: string) => {
+    switch (status) {
+      case "paid": return t("paid");
+      case "unpaid": return t("unpaid");
+      case "installment": return t("installment");
+      default: return status;
+    }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+      <View style={[styles.header, styles.headerRTL, { paddingTop: insets.top + Spacing.md }]}>
         <Pressable
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
           style={styles.menuButton}
         >
           <Feather name="menu" size={24} color={theme.text} />
         </Pressable>
-        <View style={styles.headerTitle}>
+        <View style={[styles.headerTitle, styles.headerTitleRTL]}>
           <Image
             source={AppIcon}
-            style={styles.headerLogo}
+            style={[styles.headerLogo, styles.headerLogoRTL]}
             contentFit="contain"
           />
-          <ThemedText type="h3">Bezoar</ThemedText>
+          <ThemedText type="h3">{t("appName")}</ThemedText>
         </View>
         <View style={styles.menuButton} />
       </View>
@@ -126,123 +138,131 @@ export default function DashboardScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.dark.accent}
+            tintColor={theme.accent}
           />
         }
       >
-        <View style={styles.statsGrid}>
-          <View style={styles.statsRow}>
-            <StatCard
-              title="Total Patients"
-              value={stats.totalPatients}
-              icon="users"
-            />
-            <View style={styles.statSpacer} />
-            <StatCard
-              title="Bottles Sold"
-              value={stats.totalBottlesSold}
-              icon="package"
-            />
-          </View>
-          <View style={styles.statsRow}>
-            <StatCard
-              title="Total Sales"
-              value={formatCurrency(stats.totalSales)}
-              icon="shopping-cart"
-              trend="up"
-            />
-            <View style={styles.statSpacer} />
-            <StatCard
-              title="Outstanding Debt"
-              value={formatCurrency(stats.totalDebt)}
-              icon="alert-circle"
-              trend={stats.totalDebt > 0 ? "down" : "neutral"}
-            />
-          </View>
-          <View style={styles.statsRow}>
-            <StatCard
-              title="Monthly Sales"
-              value={formatCurrency(stats.monthlySales)}
-              icon="calendar"
-            />
-            <View style={styles.statSpacer} />
-            <StatCard
-              title="Patients with Debt"
-              value={stats.patientsWithDebt}
-              icon="user-x"
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <ThemedText type="h4">Recent Patients</ThemedText>
-            <Pressable
-              onPress={() => (navigation as any).navigate("Patients")}
-              hitSlop={8}
-            >
-              <ThemedText style={{ color: Colors.dark.accent }}>View All</ThemedText>
-            </Pressable>
-          </View>
-          {recentPatients.length > 0 ? (
-            recentPatients.map((patient) => (
-              <ListItem
-                key={patient.id}
-                title={`${patient.firstName} ${patient.lastName}`}
-                subtitle={patient.phone}
-                leftIcon="user"
-                onPress={() =>
-                  (navigation as any).navigate("PatientDetail", { patientId: patient.id })
-                }
+        <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+          <View style={styles.statsGrid}>
+            <View style={[styles.statsRow, styles.statsRowRTL]}>
+              <StatCard
+                title={t("totalPatients")}
+                value={stats.totalPatients.toLocaleString("fa-IR")}
+                icon="users"
               />
-            ))
-          ) : (
-            <GlassCard>
-              <ThemedText style={{ color: theme.textSecondary, textAlign: "center" }}>
-                No patients yet
-              </ThemedText>
-            </GlassCard>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <ThemedText type="h4">Recent Sales</ThemedText>
-            <Pressable
-              onPress={() => (navigation as any).navigate("Sales")}
-              hitSlop={8}
-            >
-              <ThemedText style={{ color: Colors.dark.accent }}>View All</ThemedText>
-            </Pressable>
-          </View>
-          {recentSales.length > 0 ? (
-            recentSales.map((sale) => (
-              <ListItem
-                key={sale.id}
-                title={`${sale.bottleCount} bottles`}
-                subtitle={formatCurrency(sale.totalPrice)}
-                leftIcon="shopping-cart"
-                badge={sale.paymentStatus}
-                badgeColor={
-                  sale.paymentStatus === "paid"
-                    ? Colors.dark.success
-                    : sale.paymentStatus === "unpaid"
-                      ? Colors.dark.error
-                      : Colors.dark.warning
-                }
-                onPress={() =>
-                  (navigation as any).navigate("SaleDetail", { saleId: sale.id })
-                }
+              <View style={styles.statSpacer} />
+              <StatCard
+                title={t("bottlesSold")}
+                value={stats.totalBottlesSold.toLocaleString("fa-IR")}
+                icon="package"
               />
-            ))
-          ) : (
-            <GlassCard>
-              <ThemedText style={{ color: theme.textSecondary, textAlign: "center" }}>
-                No sales yet
-              </ThemedText>
-            </GlassCard>
-          )}
-        </View>
+            </View>
+            <View style={[styles.statsRow, styles.statsRowRTL]}>
+              <StatCard
+                title={t("totalSales")}
+                value={formatCurrency(stats.totalSales)}
+                icon="shopping-cart"
+                trend="up"
+              />
+              <View style={styles.statSpacer} />
+              <StatCard
+                title={t("debtBalance")}
+                value={formatCurrency(stats.totalDebt)}
+                icon="alert-circle"
+                trend={stats.totalDebt > 0 ? "down" : "neutral"}
+              />
+            </View>
+            <View style={[styles.statsRow, styles.statsRowRTL]}>
+              <StatCard
+                title={t("monthlySales")}
+                value={formatCurrency(stats.monthlySales)}
+                icon="calendar"
+              />
+              <View style={styles.statSpacer} />
+              <StatCard
+                title={t("patientsWithDebt")}
+                value={stats.patientsWithDebt.toLocaleString("fa-IR")}
+                icon="user-x"
+              />
+            </View>
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+          <View style={styles.section}>
+            <View style={[styles.sectionHeader, styles.sectionHeaderRTL]}>
+              <ThemedText type="h4">{t("recentPatients")}</ThemedText>
+              <Pressable
+                onPress={() => (navigation as any).navigate("Patients")}
+                hitSlop={8}
+              >
+                <ThemedText style={{ color: theme.accent }}>{t("viewAll")}</ThemedText>
+              </Pressable>
+            </View>
+            {recentPatients.length > 0 ? (
+              recentPatients.map((patient) => (
+                <ListItem
+                  key={patient.id}
+                  title={`${patient.firstName} ${patient.lastName}`}
+                  subtitle={patient.phone}
+                  leftIcon="user"
+                  rtl={true}
+                  onPress={() =>
+                    (navigation as any).navigate("PatientDetail", { patientId: patient.id })
+                  }
+                />
+              ))
+            ) : (
+              <GlassCard>
+                <ThemedText style={{ color: theme.textSecondary, textAlign: "center" }}>
+                  {t("noPatients")}
+                </ThemedText>
+              </GlassCard>
+            )}
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(300).duration(400)}>
+          <View style={styles.section}>
+            <View style={[styles.sectionHeader, styles.sectionHeaderRTL]}>
+              <ThemedText type="h4">{t("recentSales")}</ThemedText>
+              <Pressable
+                onPress={() => (navigation as any).navigate("Sales")}
+                hitSlop={8}
+              >
+                <ThemedText style={{ color: theme.accent }}>{t("viewAll")}</ThemedText>
+              </Pressable>
+            </View>
+            {recentSales.length > 0 ? (
+              recentSales.map((sale) => (
+                <ListItem
+                  key={sale.id}
+                  title={`${sale.bottleCount.toLocaleString("fa-IR")} ${t("bottle")}`}
+                  subtitle={formatCurrency(sale.totalPrice)}
+                  leftIcon="shopping-cart"
+                  badge={getPaymentStatusLabel(sale.paymentStatus)}
+                  badgeColor={
+                    sale.paymentStatus === "paid"
+                      ? theme.success
+                      : sale.paymentStatus === "unpaid"
+                        ? theme.error
+                        : theme.warning
+                  }
+                  rtl={true}
+                  onPress={() =>
+                    (navigation as any).navigate("SaleDetail", { saleId: sale.id })
+                  }
+                />
+              ))
+            ) : (
+              <GlassCard>
+                <ThemedText style={{ color: theme.textSecondary, textAlign: "center" }}>
+                  {t("noSales")}
+                </ThemedText>
+              </GlassCard>
+            )}
+          </View>
+        </Animated.View>
       </ScrollView>
     </View>
   );
@@ -259,14 +279,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
   },
+  headerRTL: {
+    flexDirection: "row-reverse",
+  },
   headerTitle: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  headerTitleRTL: {
+    flexDirection: "row-reverse",
   },
   headerLogo: {
     width: 32,
     height: 32,
     marginRight: Spacing.sm,
+  },
+  headerLogoRTL: {
+    marginRight: 0,
+    marginLeft: Spacing.sm,
   },
   menuButton: {
     width: 44,
@@ -288,6 +318,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginBottom: Spacing.md,
   },
+  statsRowRTL: {
+    flexDirection: "row-reverse",
+  },
   statSpacer: {
     width: Spacing.md,
   },
@@ -299,5 +332,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: Spacing.md,
+  },
+  sectionHeaderRTL: {
+    flexDirection: "row-reverse",
   },
 });

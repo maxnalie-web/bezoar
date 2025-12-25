@@ -10,12 +10,14 @@ import { Button } from "@/components/Button";
 import { GlassCard } from "@/components/GlassCard";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import { getSales, getPatients, getDrugs, saveSale, updateSale } from "@/lib/storage";
 import { Patient, Drug, PaymentStatus } from "@/types/models";
 
 export default function SaleDetailScreen() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
@@ -41,9 +43,9 @@ export default function SaleDetailScreen() {
 
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: saleId ? "Edit Sale" : "New Sale",
+      headerTitle: saleId ? t("editSale") : t("newSale"),
     });
-  }, [saleId, navigation]);
+  }, [saleId, navigation, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -90,17 +92,17 @@ export default function SaleDetailScreen() {
 
   const handleSave = async () => {
     if (!selectedPatient) {
-      Alert.alert("Error", "Please select a patient");
+      Alert.alert(t("error"), "لطفاً یک بیمار انتخاب کنید");
       return;
     }
 
     if (!selectedDrug) {
-      Alert.alert("Error", "Please select a drug");
+      Alert.alert(t("error"), "لطفاً یک دارو انتخاب کنید");
       return;
     }
 
     if (!form.bottleCount || parseInt(form.bottleCount) <= 0) {
-      Alert.alert("Error", "Please enter a valid bottle count");
+      Alert.alert(t("error"), "لطفاً تعداد بطری معتبر وارد کنید");
       return;
     }
 
@@ -128,7 +130,7 @@ export default function SaleDetailScreen() {
       }
       navigation.goBack();
     } catch (error) {
-      Alert.alert("Error", "Failed to save sale");
+      Alert.alert(t("error"), "خطا در ذخیره فروش");
     } finally {
       setLoading(false);
     }
@@ -139,7 +141,7 @@ export default function SaleDetailScreen() {
   };
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString() + " T";
+    return amount.toLocaleString("fa-IR") + " " + t("toman");
   };
 
   const PaymentStatusButton = ({ status, label }: { status: PaymentStatus; label: string }) => {
@@ -149,14 +151,15 @@ export default function SaleDetailScreen() {
         onPress={() => updateField("paymentStatus", status)}
         style={[
           styles.statusButton,
-          isSelected && [styles.statusButtonActive, { backgroundColor: Colors.dark.accent + "20" }],
+          { borderColor: theme.glassBorder },
+          isSelected && [styles.statusButtonActive, { backgroundColor: theme.accent + "20", borderColor: theme.accent }],
         ]}
       >
         <ThemedText
           type="small"
           style={[
             styles.statusText,
-            { color: isSelected ? Colors.dark.accent : theme.textSecondary },
+            { color: isSelected ? theme.accent : theme.textSecondary },
           ]}
         >
           {label}
@@ -175,8 +178,8 @@ export default function SaleDetailScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <ThemedText type="h4" style={styles.sectionTitle}>
-          Select Patient
+        <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.accent, textAlign: "right" }]}>
+          {t("selectPatient")}
         </ThemedText>
 
         {showPatientPicker ? (
@@ -191,34 +194,34 @@ export default function SaleDetailScreen() {
                 style={[
                   styles.pickerItem,
                   selectedPatient?.id === patient.id && {
-                    backgroundColor: Colors.dark.accent + "20",
+                    backgroundColor: theme.accent + "20",
                   },
                 ]}
               >
-                <ThemedText>{`${patient.firstName} ${patient.lastName}`}</ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                <ThemedText style={{ textAlign: "right" }}>{`${patient.firstName} ${patient.lastName}`}</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
                   {patient.nationalId}
                 </ThemedText>
               </Pressable>
             ))}
             {patients.length === 0 ? (
               <ThemedText style={{ color: theme.textSecondary, textAlign: "center", padding: Spacing.lg }}>
-                No patients available. Add a patient first.
+                بیماری یافت نشد. ابتدا یک بیمار اضافه کنید.
               </ThemedText>
             ) : null}
           </GlassCard>
         ) : (
           <GlassCard onPress={() => setShowPatientPicker(true)} style={styles.selectorCard}>
-            <View style={styles.selectorContent}>
-              <Feather name="user" size={20} color={Colors.dark.accent} />
-              <View style={styles.selectorText}>
-                <ThemedText type="body">
+            <View style={[styles.selectorContent, styles.selectorContentRTL]}>
+              <Feather name="user" size={20} color={theme.accent} />
+              <View style={[styles.selectorText, styles.selectorTextRTL]}>
+                <ThemedText type="body" style={{ textAlign: "right" }}>
                   {selectedPatient
                     ? `${selectedPatient.firstName} ${selectedPatient.lastName}`
-                    : "Select a patient"}
+                    : "انتخاب بیمار"}
                 </ThemedText>
                 {selectedPatient ? (
-                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
                     {selectedPatient.nationalId}
                   </ThemedText>
                 ) : null}
@@ -228,8 +231,8 @@ export default function SaleDetailScreen() {
           </GlassCard>
         )}
 
-        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl }]}>
-          Select Drug
+        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl, color: theme.accent, textAlign: "right" }]}>
+          {t("selectDrug")}
         </ThemedText>
 
         {showDrugPicker ? (
@@ -244,25 +247,25 @@ export default function SaleDetailScreen() {
                 }}
                 style={[
                   styles.pickerItem,
-                  selectedDrug?.id === drug.id && { backgroundColor: Colors.dark.accent + "20" },
+                  selectedDrug?.id === drug.id && { backgroundColor: theme.accent + "20" },
                 ]}
               >
-                <ThemedText>{drug.name}</ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {formatCurrency(drug.salePrice)} per {drug.unit}
+                <ThemedText style={{ textAlign: "right" }}>{drug.name}</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                  {formatCurrency(drug.salePrice)} هر {drug.unit}
                 </ThemedText>
               </Pressable>
             ))}
           </GlassCard>
         ) : (
           <GlassCard onPress={() => setShowDrugPicker(true)} style={styles.selectorCard}>
-            <View style={styles.selectorContent}>
-              <Feather name="package" size={20} color={Colors.dark.accent} />
-              <View style={styles.selectorText}>
-                <ThemedText type="body">{selectedDrug?.name || "Select a drug"}</ThemedText>
+            <View style={[styles.selectorContent, styles.selectorContentRTL]}>
+              <Feather name="package" size={20} color={theme.accent} />
+              <View style={[styles.selectorText, styles.selectorTextRTL]}>
+                <ThemedText type="body" style={{ textAlign: "right" }}>{selectedDrug?.name || "انتخاب دارو"}</ThemedText>
                 {selectedDrug ? (
-                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                    {formatCurrency(selectedDrug.salePrice)} per {selectedDrug.unit}
+                  <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                    {formatCurrency(selectedDrug.salePrice)} هر {selectedDrug.unit}
                   </ThemedText>
                 ) : null}
               </View>
@@ -271,78 +274,84 @@ export default function SaleDetailScreen() {
           </GlassCard>
         )}
 
-        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl }]}>
-          Purchase Details
+        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl, color: theme.accent, textAlign: "right" }]}>
+          جزئیات خرید
         </ThemedText>
 
         <FormInput
-          label="Bottle Count"
+          label={t("bottleCount")}
           value={form.bottleCount}
           onChangeText={(value) => updateField("bottleCount", value)}
-          placeholder="Number of bottles"
+          placeholder="تعداد بطری"
           keyboardType="numeric"
+          rtl={true}
         />
         <FormInput
-          label="Unit Price (Toman)"
+          label={`${t("pricePerUnit")} (${t("toman")})`}
           value={form.unitPrice}
           onChangeText={(value) => updateField("unitPrice", value)}
-          placeholder="Price per bottle"
+          placeholder="قیمت هر بطری"
           keyboardType="numeric"
+          rtl={true}
         />
 
         <GlassCard style={styles.totalCard}>
           <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            Total Price
+            {t("totalPrice")}
           </ThemedText>
-          <ThemedText type="h3" style={{ color: Colors.dark.accent }}>
+          <ThemedText type="h3" style={{ color: theme.accent }}>
             {formatCurrency(calculateTotal())}
           </ThemedText>
         </GlassCard>
 
         <FormInput
-          label="Purchase Date"
+          label={t("purchaseDate")}
           value={form.purchaseDate}
           onChangeText={(value) => updateField("purchaseDate", value)}
-          placeholder="YYYY-MM-DD"
+          placeholder="۱۴۰۳-۰۱-۰۱"
+          rtl={true}
         />
         <FormInput
-          label="Delivery Date"
+          label="تاریخ تحویل"
           value={form.deliveryDate}
           onChangeText={(value) => updateField("deliveryDate", value)}
-          placeholder="YYYY-MM-DD"
+          placeholder="۱۴۰۳-۰۱-۰۱"
+          rtl={true}
         />
 
-        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl }]}>
-          Payment Status
+        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl, color: theme.accent, textAlign: "right" }]}>
+          {t("paymentStatus")}
         </ThemedText>
 
-        <View style={styles.statusContainer}>
-          <PaymentStatusButton status="paid" label="Paid" />
-          <PaymentStatusButton status="unpaid" label="Unpaid" />
-          <PaymentStatusButton status="installment" label="Installment" />
+        <View style={[styles.statusContainer, styles.statusContainerRTL]}>
+          <PaymentStatusButton status="paid" label={t("paid")} />
+          <PaymentStatusButton status="unpaid" label={t("unpaid")} />
+          <PaymentStatusButton status="installment" label={t("installment")} />
         </View>
 
         {form.paymentStatus === "installment" ? (
           <View style={styles.installmentSection}>
             <FormInput
-              label="Number of Installments"
+              label="تعداد اقساط"
               value={form.installmentCount}
               onChangeText={(value) => updateField("installmentCount", value)}
-              placeholder="e.g., 3"
+              placeholder="مثال: ۳"
               keyboardType="numeric"
+              rtl={true}
             />
             <FormInput
-              label="Amount per Installment (Toman)"
+              label={`مبلغ هر قسط (${t("toman")})`}
               value={form.installmentAmount}
               onChangeText={(value) => updateField("installmentAmount", value)}
-              placeholder="Amount per payment"
+              placeholder="مبلغ هر پرداخت"
               keyboardType="numeric"
+              rtl={true}
             />
           </View>
         ) : null}
 
         <Button onPress={handleSave} loading={loading} style={styles.saveButton}>
-          {saleId ? "Update Sale" : "Create Sale"}
+          {saleId ? t("updateSale") : t("newSale")}
         </Button>
       </KeyboardAwareScrollViewCompat>
     </View>
@@ -362,7 +371,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginBottom: Spacing.md,
-    color: Colors.dark.accent,
   },
   selectorCard: {
     marginBottom: Spacing.md,
@@ -371,9 +379,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+  selectorContentRTL: {
+    flexDirection: "row-reverse",
+  },
   selectorText: {
     flex: 1,
     marginLeft: Spacing.md,
+  },
+  selectorTextRTL: {
+    marginLeft: 0,
+    marginRight: Spacing.md,
   },
   pickerCard: {
     marginBottom: Spacing.md,
@@ -393,17 +408,17 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
     gap: Spacing.sm,
   },
+  statusContainerRTL: {
+    flexDirection: "row-reverse",
+  },
   statusButton: {
     flex: 1,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.sm,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: Colors.dark.glassBorder,
   },
-  statusButtonActive: {
-    borderColor: Colors.dark.accent,
-  },
+  statusButtonActive: {},
   statusText: {
     fontWeight: "600",
   },

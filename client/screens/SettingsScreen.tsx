@@ -16,41 +16,21 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 
 export default function SettingsScreen() {
   const { theme, isDark, toggleColorScheme } = useTheme();
-  const { t, language, setLanguage, isRTL } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-
-  const handleLanguagePress = () => {
-    const newLang = language === "fa" ? "en" : "fa";
-    Alert.alert(
-      language === "fa" ? "Change Language" : "تغییر زبان",
-      language === "fa" 
-        ? "Switch to English? The app will restart."
-        : "تغییر به فارسی؟ برنامه مجدداً راه‌اندازی می‌شود.",
-      [
-        { text: t("cancel"), style: "cancel" },
-        { 
-          text: t("confirm"), 
-          onPress: () => setLanguage(newLang)
-        },
-      ]
-    );
-  };
 
   const handleAbout = () => {
     Alert.alert(
       `${t("about")} ${t("appName")}`,
-      `${t("appName")} v1.0.0\n\n${isRTL 
-        ? "برنامه مدیریت بیماران و داروها برای پیگیری فروش و پرداخت‌ها.\n\nطراحی شده برای استفاده آفلاین با ذخیره‌سازی محلی داده."
-        : "A patient and drug management application for tracking sales and payments.\n\nDesigned for offline-first usage with local data storage."
-      }`,
-      [{ text: "OK" }]
+      `${t("appName")} ${t("version")} 1.0.0\n\n${t("appDescription")}`,
+      [{ text: t("confirm") }]
     );
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }, isRTL && styles.headerRTL]}>
+      <View style={[styles.header, styles.headerRTL, { paddingTop: insets.top + Spacing.md }]}>
         <Pressable
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
           style={styles.menuButton}
@@ -70,23 +50,16 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-          <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary, textAlign: isRTL ? "right" : "left" }]}>
+          <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary, textAlign: "right" }]}>
             {t("appearance").toUpperCase()}
           </ThemedText>
           <View style={styles.section}>
-            <ListItem
-              title={t("language")}
-              subtitle={language === "fa" ? "فارسی" : "English"}
-              leftIcon="globe"
-              onPress={handleLanguagePress}
-              rtl={isRTL}
-            />
-            <View style={[styles.themeRow, { backgroundColor: theme.backgroundDefault }, isRTL && styles.themeRowRTL]}>
-              <View style={[styles.themeIconContainer, isRTL && styles.themeIconContainerRTL]}>
+            <View style={[styles.themeRow, { backgroundColor: theme.backgroundDefault }, styles.themeRowRTL]}>
+              <View style={[styles.themeIconContainer, styles.themeIconContainerRTL]}>
                 <Feather name={isDark ? "moon" : "sun"} size={22} color={theme.accent} />
-                <View style={isRTL ? styles.themeTextRTL : styles.themeText}>
-                  <ThemedText style={styles.themeTitle}>{t("theme")}</ThemedText>
-                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                <View style={styles.themeTextRTL}>
+                  <ThemedText style={[styles.themeTitle, { textAlign: "right" }]}>{t("theme")}</ThemedText>
+                  <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
                     {isDark ? t("darkMode") : t("lightMode")}
                   </ThemedText>
                 </View>
@@ -102,22 +75,22 @@ export default function SettingsScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-          <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary, textAlign: isRTL ? "right" : "left" }]}>
+          <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary, textAlign: "right" }]}>
             {t("dataManagement").toUpperCase()}
           </ThemedText>
           <View style={styles.section}>
             <ListItem
               title={t("backup")}
-              subtitle={isRTL ? "مدیریت پشتیبان‌های داده" : "Manage your data backups"}
+              subtitle="مدیریت پشتیبان‌های داده"
               leftIcon="database"
               onPress={() => (navigation as any).navigate("Backup")}
-              rtl={isRTL}
+              rtl={true}
             />
           </View>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-          <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary, textAlign: isRTL ? "right" : "left" }]}>
+          <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary, textAlign: "right" }]}>
             {t("about").toUpperCase()}
           </ThemedText>
           <View style={styles.section}>
@@ -126,7 +99,7 @@ export default function SettingsScreen() {
               subtitle={`${t("version")} 1.0.0`}
               leftIcon="info"
               onPress={handleAbout}
-              rtl={isRTL}
+              rtl={true}
             />
           </View>
         </Animated.View>
@@ -144,10 +117,10 @@ export default function SettingsScreen() {
               {t("appName")}
             </ThemedText>
             <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center" }}>
-              {isRTL ? "مدیریت بیمار و دارو" : "Patient & Drug Management"}
+              {t("patientDrugManagement")}
             </ThemedText>
             <ThemedText type="small" style={[styles.version, { color: theme.textSecondary }]}>
-              v1.0.0
+              {t("version")} 1.0.0
             </ThemedText>
           </GlassCard>
         </Animated.View>
@@ -210,9 +183,6 @@ const styles = StyleSheet.create({
   },
   themeIconContainerRTL: {
     flexDirection: "row-reverse",
-  },
-  themeText: {
-    marginLeft: Spacing.md,
   },
   themeTextRTL: {
     marginRight: Spacing.md,

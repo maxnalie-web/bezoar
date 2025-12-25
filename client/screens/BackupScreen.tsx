@@ -19,7 +19,7 @@ import { getAllData, restoreData, clearAllData } from "@/lib/storage";
 
 export default function BackupScreen() {
   const { theme } = useTheme();
-  const { t, isRTL } = useLanguage();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
@@ -48,14 +48,14 @@ export default function BackupScreen() {
           });
         } else {
           await Clipboard.setStringAsync(backup);
-          Alert.alert(t("success"), isRTL ? "داده‌های پشتیبان در کلیپ‌بورد کپی شد!" : "Backup data copied to clipboard!");
+          Alert.alert(t("success"), t("backupCopied"));
         }
       } else {
         await Clipboard.setStringAsync(backup);
-        Alert.alert(t("success"), isRTL ? "داده‌های پشتیبان در کلیپ‌بورد کپی شد!" : "Backup data copied to clipboard!");
+        Alert.alert(t("success"), t("backupCopied"));
       }
     } catch (error) {
-      Alert.alert(t("error"), isRTL ? "خطا در ایجاد پشتیبان" : "Failed to create backup");
+      Alert.alert(t("error"), t("failedToCreateBackup"));
     } finally {
       setLoading(false);
     }
@@ -81,7 +81,7 @@ export default function BackupScreen() {
             dialogTitle: t("exportToFile"),
           });
         } else {
-          Alert.alert(t("error"), isRTL ? "اشتراک‌گذاری در این دستگاه امکان‌پذیر نیست" : "Sharing not available on this device");
+          Alert.alert(t("error"), t("sharingNotAvailable"));
         }
       } else {
         const blob = new Blob([backup], { type: "application/json" });
@@ -91,10 +91,10 @@ export default function BackupScreen() {
         a.download = fileName;
         a.click();
         URL.revokeObjectURL(url);
-        Alert.alert(t("success"), isRTL ? "فایل دانلود شد!" : "File downloaded!");
+        Alert.alert(t("success"), t("fileDownloaded"));
       }
     } catch (error) {
-      Alert.alert(t("error"), isRTL ? "خطا در خروجی گرفتن به فایل" : "Failed to export to file");
+      Alert.alert(t("error"), t("failedToExport"));
     } finally {
       setLoading(false);
     }
@@ -123,9 +123,7 @@ export default function BackupScreen() {
 
       Alert.alert(
         t("restoreBackup"),
-        isRTL 
-          ? `${data.patients.length} بیمار، ${data.drugs.length} دارو، ${data.sales.length} فروش یافت شد. بازیابی شود؟`
-          : `Found ${data.patients.length} patients, ${data.drugs.length} drugs, ${data.sales.length} sales. Restore this data?`,
+        `${data.patients.length} بیمار، ${data.drugs.length} دارو، ${data.sales.length} فروش ${t("foundData")}. ${t("restoreQuestion")}`,
         [
           { text: t("cancel"), style: "cancel" },
           {
@@ -138,21 +136,21 @@ export default function BackupScreen() {
         ]
       );
     } catch (error) {
-      Alert.alert(t("error"), isRTL ? "فرمت فایل پشتیبان نامعتبر است" : "Invalid backup file format");
+      Alert.alert(t("error"), t("invalidBackupFormat"));
     }
   };
 
   const handleCopyBackup = async () => {
     if (!backupData) return;
     await Clipboard.setStringAsync(backupData);
-    Alert.alert(t("success"), isRTL ? "پشتیبان در کلیپ‌بورد کپی شد!" : "Backup copied to clipboard!");
+    Alert.alert(t("success"), t("backupCopied"));
   };
 
   const handleRestoreFromClipboard = async () => {
     try {
       const clipboardContent = await Clipboard.getStringAsync();
       if (!clipboardContent) {
-        Alert.alert(t("error"), isRTL ? "کلیپ‌بورد خالی است" : "Clipboard is empty");
+        Alert.alert(t("error"), t("clipboardEmpty"));
         return;
       }
 
@@ -163,9 +161,7 @@ export default function BackupScreen() {
 
       Alert.alert(
         t("restoreBackup"),
-        isRTL 
-          ? `${data.patients.length} بیمار، ${data.drugs.length} دارو، ${data.sales.length} فروش یافت شد. بازیابی شود؟`
-          : `Found ${data.patients.length} patients, ${data.drugs.length} drugs, ${data.sales.length} sales. Restore this data?`,
+        `${data.patients.length} بیمار، ${data.drugs.length} دارو، ${data.sales.length} فروش ${t("foundData")}. ${t("restoreQuestion")}`,
         [
           { text: t("cancel"), style: "cancel" },
           {
@@ -178,16 +174,14 @@ export default function BackupScreen() {
         ]
       );
     } catch (error) {
-      Alert.alert(t("error"), isRTL ? "داده پشتیبان در کلیپ‌بورد نامعتبر است" : "Invalid backup data in clipboard");
+      Alert.alert(t("error"), t("invalidBackupData"));
     }
   };
 
   const handleClearData = () => {
     Alert.alert(
       t("clearAllData"),
-      isRTL 
-        ? "آیا مطمئن هستید که می‌خواهید همه داده‌ها را حذف کنید؟ این عمل قابل بازگشت نیست."
-        : "Are you sure you want to delete ALL data? This action cannot be undone.",
+      t("areYouSure") + " " + t("thisCannotBeUndone"),
       [
         { text: t("cancel"), style: "cancel" },
         {
@@ -195,10 +189,8 @@ export default function BackupScreen() {
           style: "destructive",
           onPress: () => {
             Alert.alert(
-              t("confirm"),
-              isRTL 
-                ? "این کار تمام بیماران، داروها، فروش‌ها و سوابق پرداخت را به طور دائمی حذف می‌کند."
-                : "This will permanently delete all patients, drugs, sales, and payment records.",
+              t("confirmDelete"),
+              t("deleteConfirmMessage"),
               [
                 { text: t("cancel"), style: "cancel" },
                 {
@@ -206,7 +198,7 @@ export default function BackupScreen() {
                   style: "destructive",
                   onPress: async () => {
                     await clearAllData();
-                    Alert.alert(t("success"), isRTL ? "همه داده‌ها حذف شد." : "All data has been deleted.");
+                    Alert.alert(t("success"), t("allDataDeleted"));
                   },
                 },
               ]
@@ -219,7 +211,7 @@ export default function BackupScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }, isRTL && styles.headerRTL]}>
+      <View style={[styles.header, styles.headerRTL, { paddingTop: insets.top + Spacing.md }]}>
         <Pressable
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
           style={styles.menuButton}
@@ -240,16 +232,16 @@ export default function BackupScreen() {
       >
         <Animated.View entering={FadeInDown.delay(100).duration(400)}>
           <GlassCard style={styles.section}>
-            <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
+            <View style={[styles.sectionHeader, styles.sectionHeaderRTL]}>
               <View style={[styles.iconContainer, { backgroundColor: theme.accent + "20" }]}>
                 <Feather name="upload-cloud" size={24} color={theme.accent} />
               </View>
-              <View style={[styles.sectionInfo, isRTL && styles.sectionInfoRTL]}>
-                <ThemedText type="h4" style={isRTL ? { textAlign: "right" } : undefined}>
+              <View style={[styles.sectionInfo, styles.sectionInfoRTL]}>
+                <ThemedText type="h4" style={{ textAlign: "right" }}>
                   {t("createBackup")}
                 </ThemedText>
-                <ThemedText type="small" style={[{ color: theme.textSecondary }, isRTL && { textAlign: "right" }]}>
-                  {isRTL ? "خروجی تمام داده‌ها به صورت JSON" : "Export all your data as JSON"}
+                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                  {t("exportAllData")}
                 </ThemedText>
               </View>
             </View>
@@ -276,7 +268,7 @@ export default function BackupScreen() {
                 icon="copy"
                 style={styles.actionButton}
               >
-                {isRTL ? "کپی در کلیپ‌بورد" : "Copy to Clipboard"}
+                {t("copyToClipboard")}
               </Button>
             ) : null}
           </GlassCard>
@@ -284,16 +276,16 @@ export default function BackupScreen() {
 
         <Animated.View entering={FadeInDown.delay(200).duration(400)}>
           <GlassCard style={styles.section}>
-            <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
+            <View style={[styles.sectionHeader, styles.sectionHeaderRTL]}>
               <View style={[styles.iconContainer, { backgroundColor: theme.success + "20" }]}>
                 <Feather name="download-cloud" size={24} color={theme.success} />
               </View>
-              <View style={[styles.sectionInfo, isRTL && styles.sectionInfoRTL]}>
-                <ThemedText type="h4" style={isRTL ? { textAlign: "right" } : undefined}>
+              <View style={[styles.sectionInfo, styles.sectionInfoRTL]}>
+                <ThemedText type="h4" style={{ textAlign: "right" }}>
                   {t("restoreBackup")}
                 </ThemedText>
-                <ThemedText type="small" style={[{ color: theme.textSecondary }, isRTL && { textAlign: "right" }]}>
-                  {isRTL ? "ورود داده از فایل پشتیبان" : "Import data from a backup file"}
+                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                  {t("importFromBackup")}
                 </ThemedText>
               </View>
             </View>
@@ -311,23 +303,23 @@ export default function BackupScreen() {
               icon="clipboard"
               style={styles.actionButton}
             >
-              {isRTL ? "بازیابی از کلیپ‌بورد" : "Restore from Clipboard"}
+              {t("restoreFromClipboard")}
             </Button>
           </GlassCard>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(300).duration(400)}>
           <GlassCard style={styles.section}>
-            <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
+            <View style={[styles.sectionHeader, styles.sectionHeaderRTL]}>
               <View style={[styles.iconContainer, { backgroundColor: theme.error + "20" }]}>
                 <Feather name="trash-2" size={24} color={theme.error} />
               </View>
-              <View style={[styles.sectionInfo, isRTL && styles.sectionInfoRTL]}>
-                <ThemedText type="h4" style={isRTL ? { textAlign: "right" } : undefined}>
-                  {isRTL ? "بازنشانی پایگاه داده" : "Reset Database"}
+              <View style={[styles.sectionInfo, styles.sectionInfoRTL]}>
+                <ThemedText type="h4" style={{ textAlign: "right" }}>
+                  {t("resetDatabase")}
                 </ThemedText>
-                <ThemedText type="small" style={[{ color: theme.textSecondary }, isRTL && { textAlign: "right" }]}>
-                  {isRTL ? "حذف دائمی تمام داده‌ها" : "Delete all data permanently"}
+                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                  {t("deleteAllDataPermanently")}
                 </ThemedText>
               </View>
             </View>
@@ -343,13 +335,10 @@ export default function BackupScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(400).duration(400)}>
-          <GlassCard style={[styles.infoCard, isRTL && styles.infoCardRTL]}>
+          <GlassCard style={[styles.infoCard, styles.infoCardRTL]}>
             <Feather name="info" size={20} color={theme.textSecondary} />
-            <ThemedText type="small" style={[styles.infoText, { color: theme.textSecondary }, isRTL && styles.infoTextRTL]}>
-              {isRTL 
-                ? "پشتیبان‌ها شامل تمام بیماران، داروها، فروش‌ها و سوابق اقساط است. داده‌های پشتیبان را در مکان امنی ذخیره کنید."
-                : "Backups include all patients, drugs, sales, and installment records. Store your backup data in a safe place."
-              }
+            <ThemedText type="small" style={[styles.infoText, { color: theme.textSecondary }, styles.infoTextRTL]}>
+              {t("backupInfo")}
             </ThemedText>
           </GlassCard>
         </Animated.View>
