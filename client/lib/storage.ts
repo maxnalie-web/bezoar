@@ -71,6 +71,7 @@ export async function getDrugs(): Promise<Drug[]> {
         description: "Default Bezoar drug",
         createdAt: getTimestamp(),
         updatedAt: getTimestamp(),
+        isMain: true,
       };
       await AsyncStorage.setItem(STORAGE_KEYS.DRUGS, JSON.stringify([defaultDrug]));
       return [defaultDrug];
@@ -105,6 +106,10 @@ export async function updateDrug(id: string, updates: Partial<Drug>): Promise<Dr
 
 export async function deleteDrug(id: string): Promise<boolean> {
   const drugs = await getDrugs();
+  const target = drugs.find(d => d.id === id);
+  if (target && target.name === "Bezoar") {
+    return false;
+  }
   const filtered = drugs.filter((d) => d.id !== id);
   if (filtered.length === drugs.length) return false;
   await AsyncStorage.setItem(STORAGE_KEYS.DRUGS, JSON.stringify(filtered));
@@ -120,20 +125,46 @@ export async function getSales(): Promise<Sale[]> {
   }
 }
 
-export async function saveSale(sale: Omit<Sale, "id" | "createdAt" | "updatedAt">): Promise<Sale> {
+export async function saveSale(
+  sale: Omit<Sale, "id" | "createdAt" | "updatedAt">
+): Promise<Sale> {
   const sales = await getSales();
+
+  let mainTotal = sale.bottleCount * sale.unitPrice;
+  let auxiliaryTotal = Array.isArray(sale.auxiliaryDrugs)
+    ? sale.auxiliaryDrugs.reduce(
+        (sum, d) => sum + d.quantity * d.unitPrice,
+        0
+      )
+    : 0;
+
+  if (sale.isGift === true) {
+    mainTotal = 0;
+    auxiliaryTotal = 0;
+  }
+
   const newSale: Sale = {
     ...sale,
+    mainTotalPrice: mainTotal,
+    auxiliaryTotalPrice: auxiliaryTotal,
+    totalPrice: sale.isGift === true ? 0 : mainTotal + auxiliaryTotal,
     id: generateId(),
     createdAt: getTimestamp(),
     updatedAt: getTimestamp(),
   };
+
   sales.push(newSale);
   await AsyncStorage.setItem(STORAGE_KEYS.SALES, JSON.stringify(sales));
-  
-  if (sale.paymentStatus === "installment" && sale.installmentCount && sale.installmentAmount) {
+
+  if (
+    sale.paymentStatus === "installment" &&
+    sale.installmentCount &&
+    sale.installmentAmount &&
+    !sale.isGift
+  ) {
     const installments: Installment[] = [];
     const dueDate = new Date(sale.purchaseDate);
+
     for (let i = 1; i <= sale.installmentCount; i++) {
       dueDate.setMonth(dueDate.getMonth() + 1);
       installments.push({
@@ -146,17 +177,43 @@ export async function saveSale(sale: Omit<Sale, "id" | "createdAt" | "updatedAt"
         createdAt: getTimestamp(),
       });
     }
+
     await saveInstallments(installments);
   }
-  
+
   return newSale;
 }
 
-export async function updateSale(id: string, updates: Partial<Sale>): Promise<Sale | null> {
+export async function updateSale(
+  id: string,
+  updates: Partial<Sale>
+): Promise<Sale | null> {
   const sales = await getSales();
   const index = sales.findIndex((s) => s.id === id);
   if (index === -1) return null;
-  sales[index] = { ...sales[index], ...updates, updatedAt: getTimestamp() };
+  const base = { ...sales[index], ...updates };
+
+  let mainTotal = base.bottleCount * base.unitPrice;
+
+  let auxiliaryTotal = Array.isArray(base.auxiliaryDrugs)
+    ? base.auxiliaryDrugs.reduce(
+        (sum, d) => sum + d.quantity * d.unitPrice,
+        0
+      )
+    : 0;
+
+  if (base.isGift === true) {
+    mainTotal = 0;
+    auxiliaryTotal = 0;
+  }
+
+  sales[index] = {
+    ...base,
+    mainTotalPrice: mainTotal,
+    auxiliaryTotalPrice: auxiliaryTotal,
+    totalPrice: base.isGift === true ? 0 : mainTotal + auxiliaryTotal,
+    updatedAt: getTimestamp(),
+  };
   await AsyncStorage.setItem(STORAGE_KEYS.SALES, JSON.stringify(sales));
   return sales[index];
 }
@@ -258,4 +315,59 @@ export async function clearAllData(): Promise<void> {
     AsyncStorage.removeItem(STORAGE_KEYS.SALES),
     AsyncStorage.removeItem(STORAGE_KEYS.INSTALLMENTS),
   ]);
+}
+
+export type SearchResult =
+  | {
+      type: "patient";
+      patient: Patient;
+    }
+  | {
+      type: "sale";
+      sale: Sale;
+      patient?: Patient;
+    };
+
+export async function searchAll(query: string): Promise<SearchResult[]> {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+
+  const [patients, sales] = await Promise.all([
+    getPatients(),
+    getSales(),
+  ]);
+
+  const results: SearchResult[] = [];
+
+  // Patients
+  patients.forEach(p => {
+    if (
+      p.firstName.toLowerCase().includes(q) ||
+      p.lastName.toLowerCase().includes(q) ||
+      p.phone?.includes(q) ||
+      p.nationalId?.includes(q)
+    ) {
+      results.push({
+        type: "patient",
+        patient: p,
+      });
+    }
+  });
+
+  // Sales
+  sales.forEach(s => {
+    if (
+      s.totalPrice.toString().includes(q) ||
+      s.bottleCount.toString().includes(q)
+    ) {
+      const patient = patients.find(p => p.id === s.patientId);
+      results.push({
+        type: "sale",
+        sale: s,
+        patient,
+      });
+    }
+  });
+
+  return results;
 }

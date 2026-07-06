@@ -27,16 +27,19 @@ export default function BackupScreen() {
     try {
       const data = await getAllData();
       const backup = JSON.stringify(data, null, 2);
-      const fileName = `bezoar-backup-${new Date().toISOString().split('T')[0]}.json`;
-      
+      const fileName = `bezoar-backup-${new Date().toISOString().split("T")[0]}.json`;
+
       if (Platform.OS !== "web") {
-        const { File, Paths } = await import("expo-file-system");
-        const file = new File(Paths.document, fileName);
-        file.write(backup);
-        
+        const FileSystem = await import("expo-file-system");
+        const fileUri = FileSystem.documentDirectory + fileName;
+
+        await FileSystem.writeAsStringAsync(fileUri, backup, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+
         const canShare = await Sharing.isAvailableAsync();
         if (canShare) {
-          await Sharing.shareAsync(file.uri, {
+          await Sharing.shareAsync(fileUri, {
             mimeType: "application/json",
             dialogTitle: t("exportToFile"),
           });
@@ -68,24 +71,31 @@ export default function BackupScreen() {
         copyToCacheDirectory: true,
       });
 
-      if (result.canceled) {
+      if (result.canceled || !result.assets?.length) {
         return;
       }
 
       const fileUri = result.assets[0].uri;
       
       let content: string;
+
       if (Platform.OS !== "web") {
-        const { File } = await import("expo-file-system");
-        const file = new File(fileUri);
-        content = await file.text();
+        const FileSystem = await import("expo-file-system");
+        content = await FileSystem.readAsStringAsync(fileUri, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
       } else {
         const response = await fetch(fileUri);
         content = await response.text();
       }
 
       const data = JSON.parse(content);
-      if (!data.patients || !data.drugs || !data.sales || !data.installments) {
+      if (
+        !Array.isArray(data.patients) ||
+        !Array.isArray(data.drugs) ||
+        !Array.isArray(data.sales) ||
+        !Array.isArray(data.installments)
+      ) {
         throw new Error("Invalid backup format");
       }
 
@@ -120,14 +130,15 @@ export default function BackupScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, styles.headerRTL, { paddingTop: insets.top + Spacing.md }]}>
-        <Pressable
-          onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-          style={styles.menuButton}
-        >
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+        <Pressable onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} style={styles.menuButton}>
           <Feather name="menu" size={24} color={theme.text} />
         </Pressable>
-        <ThemedText type="h3">{t("backup")}</ThemedText>
+
+        <ThemedText type="h3" style={styles.headerTitle}>
+          {t("backup")}
+        </ThemedText>
+
         <View style={styles.menuButton} />
       </View>
 
@@ -146,10 +157,10 @@ export default function BackupScreen() {
                 <Feather name="upload-cloud" size={24} color={theme.accent} />
               </View>
               <View style={[styles.sectionInfo, styles.sectionInfoRTL]}>
-                <ThemedText type="h4" style={{ textAlign: "right" }}>
+                <ThemedText type="h4" style={{ textAlign: "left" }}>
                   {t("createBackup")}
                 </ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "left" }}>
                   {t("exportAllData")}
                 </ThemedText>
               </View>
@@ -172,10 +183,10 @@ export default function BackupScreen() {
                 <Feather name="download-cloud" size={24} color={theme.success} />
               </View>
               <View style={[styles.sectionInfo, styles.sectionInfoRTL]}>
-                <ThemedText type="h4" style={{ textAlign: "right" }}>
+                <ThemedText type="h4" style={{ textAlign: "left" }}>
                   {t("restoreBackup")}
                 </ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "left" }}>
                   {t("importFromBackup")}
                 </ThemedText>
               </View>
@@ -217,14 +228,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
   },
-  headerRTL: {
-    flexDirection: "row-reverse",
-  },
   menuButton: {
     width: 44,
     height: 44,
     alignItems: "center",
     justifyContent: "center",
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
   },
   scrollView: {
     flex: 1,
@@ -242,7 +254,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   sectionHeaderRTL: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
   },
   iconContainer: {
     width: 48,
@@ -256,19 +268,19 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
   sectionInfoRTL: {
-    marginLeft: 0,
-    marginRight: Spacing.md,
+    marginLeft: Spacing.md,
+    marginRight: 0,
   },
   actionButton: {
     marginTop: Spacing.sm,
   },
   infoRow: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "flex-start",
   },
   infoText: {
     flex: 1,
-    marginRight: Spacing.md,
-    textAlign: "right",
+    marginLeft: Spacing.md,
+    textAlign: "left",
   },
 });

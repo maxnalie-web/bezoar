@@ -73,6 +73,10 @@ export default function PatientDetailScreen() {
   };
 
   const handleSave = async () => {
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      Alert.alert(t("error"), "نام و نام خانوادگی الزامی است");
+      return;
+    }
     setLoading(true);
     try {
       if (patientId) {
@@ -102,23 +106,35 @@ export default function PatientDetailScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.accent, textAlign: "right" }]}>
-          {t("identityInformation")}
-        </ThemedText>
+        <View style={{ marginTop: Spacing.xl }}>
+          <ThemedText type="body" style={styles.sectionTitle}>
+            {t("identityInformation")}
+          </ThemedText>
+        </View>
 
         <FormInput
           label={t("firstName")}
           value={form.firstName}
           onChangeText={(value) => updateField("firstName", value)}
           placeholder={t("enterFirstName")}
-          rtl={true}
+          labelStyle={{
+            textAlign: "left",
+            alignSelf: "flex-start",
+            width: "100%",
+            fontSize: 18
+          }}
         />
         <FormInput
           label={t("lastName")}
           value={form.lastName}
           onChangeText={(value) => updateField("lastName", value)}
           placeholder={t("enterLastName")}
-          rtl={true}
+          labelStyle={{
+            textAlign: "left",
+            alignSelf: "flex-start",
+            width: "100%",
+            fontSize: 18
+          }}
         />
         <FormInput
           label={t("nationalId")}
@@ -126,7 +142,12 @@ export default function PatientDetailScreen() {
           onChangeText={(value) => updateField("nationalId", value)}
           placeholder={t("enterNationalId")}
           keyboardType="numeric"
-          rtl={true}
+          labelStyle={{
+            textAlign: "left",
+            alignSelf: "flex-start",
+            width: "100%",
+            fontSize: 18
+          }}
         />
         <FormInput
           label={t("phone")}
@@ -134,7 +155,12 @@ export default function PatientDetailScreen() {
           onChangeText={(value) => updateField("phone", value)}
           placeholder={t("enterPhone")}
           keyboardType="phone-pad"
-          rtl={true}
+          labelStyle={{
+            textAlign: "left",
+            alignSelf: "flex-start",
+            width: "100%",
+            fontSize: 18
+          }}
         />
         <FormInput
           label={t("address")}
@@ -142,26 +168,43 @@ export default function PatientDetailScreen() {
           onChangeText={(value) => updateField("address", value)}
           placeholder={t("enterAddress")}
           multiline
-          rtl={true}
+          labelStyle={{
+            textAlign: "left",
+            alignSelf: "flex-start",
+            width: "100%",
+            fontSize: 18
+          }}
         />
         <FormInput
           label={t("dateOfBirth")}
           value={form.dateOfBirth}
           onChangeText={(value) => updateField("dateOfBirth", value)}
           placeholder="۱۳۸۰-۰۱-۰۱"
-          rtl={true}
+          labelStyle={{
+            textAlign: "left",
+            alignSelf: "flex-start",
+            width: "100%",
+            fontSize: 18
+          }}
         />
 
-        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl, color: theme.accent, textAlign: "right" }]}>
-          {t("medicalInformation")}
-        </ThemedText>
+        <View style={{ marginTop: Spacing.xl }}>
+          <ThemedText type="body" style={styles.sectionTitle}>
+            {t("medicalInformation")}
+          </ThemedText>
+        </View>
 
         <FormInput
           label={t("mainDisease")}
           value={form.mainDisease}
           onChangeText={(value) => updateField("mainDisease", value)}
           placeholder={t("enterMainDisease")}
-          rtl={true}
+          labelStyle={{
+            textAlign: "left",
+            alignSelf: "flex-start",
+            width: "100%",
+            fontSize: 18
+          }}
         />
         <FormInput
           label={t("backgroundDiseases")}
@@ -169,7 +212,12 @@ export default function PatientDetailScreen() {
           onChangeText={(value) => updateField("backgroundDiseases", value)}
           placeholder={t("enterBackgroundDiseases")}
           multiline
-          rtl={true}
+          labelStyle={{
+            textAlign: "left",
+            alignSelf: "flex-start",
+            width: "100%",
+            fontSize: 18
+          }}
         />
         <FormInput
           label={t("medicalDescription")}
@@ -177,7 +225,12 @@ export default function PatientDetailScreen() {
           onChangeText={(value) => updateField("medicalDescription", value)}
           placeholder={t("enterMedicalDescription")}
           multiline
-          rtl={true}
+          labelStyle={{
+            textAlign: "left",
+            alignSelf: "flex-start",
+            width: "100%",
+            fontSize: 18
+          }}
         />
         <FormInput
           label={t("treatmentPlan")}
@@ -185,14 +238,24 @@ export default function PatientDetailScreen() {
           onChangeText={(value) => updateField("treatmentPlan", value)}
           placeholder={t("enterTreatmentPlan")}
           multiline
-          rtl={true}
+          labelStyle={{
+            textAlign: "left",
+            alignSelf: "flex-start",
+            width: "100%",
+            fontSize: 18
+          }}
         />
         <FormInput
           label={t("treatmentDuration")}
           value={form.treatmentDuration}
           onChangeText={(value) => updateField("treatmentDuration", value)}
           placeholder={t("enterTreatmentDuration")}
-          rtl={true}
+          labelStyle={{
+            textAlign: "left",
+            alignSelf: "flex-start",
+            width: "100%",
+            fontSize: 18
+          }}
         />
         <FormInput
           label={t("doctorNotes")}
@@ -200,7 +263,12 @@ export default function PatientDetailScreen() {
           onChangeText={(value) => updateField("doctorNotes", value)}
           placeholder={t("enterDoctorNotes")}
           multiline
-          rtl={true}
+          labelStyle={{
+            textAlign: "left",
+            alignSelf: "flex-start",
+            width: "100%",
+            fontSize: 18
+          }}
         />
 
         <Button onPress={handleSave} loading={loading} style={styles.saveButton}>
@@ -220,10 +288,16 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
+    paddingTop: Spacing.md,
   },
   sectionTitle: {
-    marginBottom: Spacing.lg,
+    fontWeight: "600",
+    fontSize: 18,
+    textAlign: "left",
+    alignSelf: "flex-start",
+    marginTop: Spacing.lg,
+    // Increase bottom margin so section title is separated from inputs
+    marginBottom: Spacing["3xl"],
   },
   saveButton: {
     marginTop: Spacing.xl,

@@ -1,4 +1,5 @@
 import React from "react";
+import { I18nManager } from "react-native";
 import { StyleSheet, Pressable, ViewStyle, Platform, View } from "react-native";
 import { BlurView } from "expo-blur";
 import Animated, {
@@ -163,6 +164,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
     overflow: "hidden",
+    alignSelf: "stretch",
   },
   cardPadding: {
     padding: Spacing.lg,
@@ -172,8 +174,10 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     marginBottom: Spacing.xs,
+    textAlign: I18nManager.isRTL ? "right" : "left",
   },
   cardSubtitle: {
     marginBottom: Spacing.md,
+    textAlign: I18nManager.isRTL ? "right" : "left",
   },
 });

@@ -1,6 +1,5 @@
 import { Platform } from "react-native";
-import { NativeStackNavigationOptions } from "@react-navigation/native-stack";
-import { isLiquidGlassAvailable } from "expo-glass-effect";
+import { StackNavigationOptions } from "@react-navigation/stack";
 
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -11,14 +10,13 @@ interface UseScreenOptionsParams {
 
 export function useScreenOptions({
   transparent = false,
-}: UseScreenOptionsParams = {}): NativeStackNavigationOptions {
+}: UseScreenOptionsParams = {}): StackNavigationOptions {
   const { theme, isDark } = useTheme();
   const { isRTL } = useLanguage();
 
   return {
     headerTitleAlign: "center",
     headerTransparent: transparent,
-    headerBlurEffect: isDark ? "dark" : "light",
     headerTintColor: theme.text,
     headerTitleStyle: {
       color: theme.text,
@@ -29,8 +27,7 @@ export function useScreenOptions({
     },
     gestureEnabled: true,
     gestureDirection: isRTL ? "horizontal-inverted" : "horizontal",
-    fullScreenGestureEnabled: isLiquidGlassAvailable() ? false : true,
-    contentStyle: {
+    cardStyle: {
       backgroundColor: theme.backgroundRoot,
     },
   };

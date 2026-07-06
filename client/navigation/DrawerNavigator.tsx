@@ -4,8 +4,10 @@ import {
   StyleSheet,
   Pressable,
   ScrollView,
+  KeyboardAvoidingView,
   useWindowDimensions,
   Platform,
+  I18nManager,
 } from "react-native";
 import { createDrawerNavigator, DrawerContentComponentProps } from "@react-navigation/drawer";
 import { Feather } from "@expo/vector-icons";
@@ -20,6 +22,7 @@ import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import AppLogo from "@assets/images/logo.png";
 
 import DashboardScreen from "@/screens/DashboardScreen";
+import SearchScreen from "@/screens/SearchScreen";
 import PatientsScreen from "@/screens/PatientsScreen";
 import DrugsScreen from "@/screens/DrugsScreen";
 import SalesScreen from "@/screens/SalesScreen";
@@ -29,6 +32,7 @@ import SettingsScreen from "@/screens/SettingsScreen";
 
 export type DrawerParamList = {
   Dashboard: undefined;
+  Search: undefined;
   Patients: undefined;
   Drugs: undefined;
   Sales: undefined;
@@ -45,6 +49,7 @@ type DrawerItemConfig = {
 
 const drawerItems: DrawerItemConfig[] = [
   { name: "Dashboard", labelKey: "dashboard", icon: "home" },
+  { name: "Search", labelKey: "search", icon: "search" },
   { name: "Patients", labelKey: "patients", icon: "users" },
   { name: "Drugs", labelKey: "drugs", icon: "package" },
   { name: "Sales", labelKey: "sales", icon: "shopping-bag" },
@@ -75,11 +80,16 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
           Platform.OS === "ios" && Shadows.capsule,
         ]}
       >
-        <ScrollView
-          style={styles.drawerScroll}
-          contentContainerStyle={styles.drawerContent}
-          showsVerticalScrollIndicator={false}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
+          <ScrollView
+            style={styles.drawerScroll}
+            contentContainerStyle={styles.drawerContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
           <Animated.View 
             entering={FadeIn.duration(500)}
             style={styles.logoContainer}
@@ -112,8 +122,8 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
                     {isActive ? (
                       <LinearGradient
                         colors={theme.activeGradient as [string, string]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
+                        start={{ x: 1, y: 0 }}
+                        end={{ x: 0, y: 0 }}
                         style={[styles.activeBackground, { borderColor: theme.accent + "40" }]}
                       />
                     ) : null}
@@ -126,7 +136,7 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
                         ]}
                       />
                     ) : null}
-                    <View style={[styles.iconContainer, isActive && { backgroundColor: isDark ? theme.accent + "15" : theme.accent + "10" }]}>
+                    <View style={styles.iconContainer}>
                       <Feather
                         name={item.icon}
                         size={20}
@@ -136,7 +146,7 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
                     <ThemedText
                       style={[
                         styles.drawerItemLabel,
-                        { color: isActive ? theme.text : theme.textSecondary },
+                        { color: isActive ? theme.text : (theme.mode === "light" ? theme.text : theme.textSecondary) },
                         isActive && { fontWeight: "600" },
                       ]}
                     >
@@ -147,7 +157,8 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
               );
             })}
           </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </View>
     </View>
   );
@@ -173,6 +184,7 @@ export default function DrawerNavigator() {
       }}
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
+      <Drawer.Screen name="Search" component={SearchScreen} />
       <Drawer.Screen name="Patients" component={PatientsScreen} />
       <Drawer.Screen name="Drugs" component={DrugsScreen} />
       <Drawer.Screen name="Sales" component={SalesScreen} />
@@ -202,9 +214,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   logoContainer: {
-    flexDirection: "row-reverse",
+    flexDirection: "column",
     alignItems: "center",
-    marginBottom: Spacing["2xl"],
+    marginBottom: Spacing.xl,
     paddingHorizontal: Spacing.sm,
   },
   logoIcon: {
@@ -219,13 +231,13 @@ const styles = StyleSheet.create({
     height: 48,
   },
   appName: {
-    marginRight: Spacing.md,
+    marginTop: Spacing.xs,
   },
   navSection: {
     gap: Spacing.xs,
   },
   drawerItem: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
@@ -248,19 +260,18 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 36,
     height: 36,
-    borderRadius: BorderRadius.sm,
     alignItems: "center",
     justifyContent: "center",
   },
   drawerItemLabel: {
-    marginRight: Spacing.md,
+    marginLeft: Spacing.md,
     fontSize: 15,
     flex: 1,
-    textAlign: "right",
+    textAlign: "left",
   },
   activeIndicator: {
     position: "absolute",
-    right: 0,
+    left: 0,
     top: 8,
     bottom: 8,
     width: 3,

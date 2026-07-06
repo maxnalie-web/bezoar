@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from "react";
-import { View, StyleSheet, FlatList, Pressable, RefreshControl, Alert } from "react-native";
+import React, { useState, useCallback, useRef } from "react";
+import { View, StyleSheet, FlatList, Pressable, RefreshControl, Alert, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation, DrawerActions, useFocusEffect } from "@react-navigation/native";
@@ -11,8 +11,9 @@ import { EmptyState } from "@/components/EmptyState";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { getPatients, deletePatient } from "@/lib/storage";
+import { getPatients, getSales, getInstallments, deletePatient } from "@/lib/storage";
 import { Patient } from "@/types/models";
+import { FormInput } from "@/components/FormInput";
 
 export default function PatientsScreen() {
   const { theme } = useTheme();
@@ -22,15 +23,46 @@ export default function PatientsScreen() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "debtors">("all");
+  const [debtorsMap, setDebtorsMap] = useState<Map<string, number>>(new Map());
+  const searchInputRef = useRef<any>(null);
+  const shiftLeft = Math.round(Dimensions.get("window").width * 0.2);
 
   const loadPatients = async () => {
     try {
-      const data = await getPatients();
-      setPatients(data.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      ));
+      const [patientsData, sales, installments] = await Promise.all([
+        getPatients(),
+        getSales(),
+        getInstallments(),
+      ]);
+
+      const debtMap = new Map<string, number>();
+
+      sales.forEach(s => {
+        if (s.paymentStatus !== "paid") {
+          debtMap.set(s.patientId, (debtMap.get(s.patientId) || 0) + s.totalPrice);
+        }
+      });
+
+      installments.forEach(i => {
+        if (i.status === "unpaid") {
+          const sale = sales.find(s => s.id === i.saleId);
+          if (sale) {
+            debtMap.set(sale.patientId, (debtMap.get(sale.patientId) || 0) + i.amount);
+          }
+        }
+      });
+
+      setDebtorsMap(debtMap);
+
+      setPatients(
+        patientsData.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      );
     } catch (error) {
       console.error("Failed to load patients:", error);
+      Alert.alert(t("error"), "خطا در بارگذاری بیماران");
     }
   };
 
@@ -70,12 +102,17 @@ export default function PatientsScreen() {
 
   const filteredPatients = patients.filter((patient) => {
     const search = searchQuery.toLowerCase();
-    return (
+    const matchesSearch =
       patient.firstName.toLowerCase().includes(search) ||
       patient.lastName.toLowerCase().includes(search) ||
-      patient.nationalId.includes(search) ||
-      patient.phone.includes(search)
-    );
+      (patient.nationalId?.includes(search) ?? false) ||
+      (patient.phone?.includes(search) ?? false);
+
+    if (!matchesSearch) return false;
+    if (filter === "debtors") {
+      return debtorsMap.has(patient.id);
+    }
+    return true;
   });
 
   const renderPatient = ({ item, index }: { item: Patient; index: number }) => (
@@ -91,13 +128,25 @@ export default function PatientsScreen() {
             <Feather name="user" size={24} color={theme.accent} />
           </View>
           <View style={[styles.patientInfo, styles.patientInfoRTL]}>
-            <ThemedText type="body" style={[styles.patientName, { textAlign: "right" }]}>
+            <ThemedText type="body" numberOfLines={1} style={[styles.patientName, { textAlign: "right" }]}>
               {item.firstName} {item.lastName}
             </ThemedText>
-            <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
-              {t("nationalId")}: {item.nationalId}
-            </ThemedText>
           </View>
+          {debtorsMap.has(item.id) && (
+            <View
+              style={{
+                backgroundColor: theme.error,
+                borderRadius: 6,
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+                marginLeft: Spacing.sm,
+              }}
+            >
+              <ThemedText type="small" style={{ color: "#fff", fontWeight: "600", textAlign: "left" }}>
+                بدهکار
+              </ThemedText>
+            </View>
+          )}
           <Pressable
             onPress={() => handleDeletePatient(item)}
             style={styles.deleteButton}
@@ -109,13 +158,13 @@ export default function PatientsScreen() {
         <View style={[styles.patientDetails, styles.patientDetailsRTL]}>
           <View style={[styles.detailRow, styles.detailRowRTL]}>
             <Feather name="phone" size={14} color={theme.textSecondary} />
-            <ThemedText type="small" style={[styles.detailText, styles.detailTextRTL, { color: theme.textSecondary }]}>
+            <ThemedText type="small" style={[styles.detailText, styles.detailTextRTL, { color: theme.textSecondary, textAlign: "left" }]}>
               {item.phone || "بدون تلفن"}
             </ThemedText>
           </View>
           <View style={[styles.detailRow, styles.detailRowRTL]}>
             <Feather name="activity" size={14} color={theme.textSecondary} />
-            <ThemedText type="small" style={[styles.detailText, styles.detailTextRTL, { color: theme.textSecondary }]}>
+            <ThemedText type="small" style={[styles.detailText, styles.detailTextRTL, { color: theme.textSecondary, textAlign: "left" }]}>
               {item.mainDisease || "بدون تشخیص"}
             </ThemedText>
           </View>
@@ -126,16 +175,49 @@ export default function PatientsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, styles.headerRTL, { paddingTop: insets.top + Spacing.md }]}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         <Pressable
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
           style={styles.menuButton}
         >
           <Feather name="menu" size={24} color={theme.text} />
         </Pressable>
+
         <ThemedText type="h3">{t("patients")}</ThemedText>
+
         <Pressable onPress={handleAddPatient} style={styles.menuButton}>
           <Feather name="plus" size={24} color={theme.accent} />
+        </Pressable>
+      </View>
+
+      <View style={{ flexDirection: "row", paddingHorizontal: Spacing.lg, marginBottom: Spacing.md }}>
+        <Pressable
+          onPress={() => setFilter("all")}
+          style={{
+            paddingHorizontal: Spacing.md,
+            paddingVertical: Spacing.sm,
+            borderRadius: BorderRadius.full,
+            marginLeft: Spacing.sm,
+            backgroundColor: filter === "all" ? theme.accent + "20" : "transparent",
+          }}
+        >
+          <ThemedText type="body" style={{ color: filter === "all" ? theme.accent : theme.textSecondary, textAlign: "left" }}>
+            همه
+          </ThemedText>
+        </Pressable>
+
+        <Pressable
+          onPress={() => setFilter("debtors")}
+          style={{
+            paddingHorizontal: Spacing.md,
+            paddingVertical: Spacing.sm,
+            borderRadius: BorderRadius.full,
+            backgroundColor: filter === "debtors" ? theme.error + "20" : "transparent",
+          }}
+        >
+          <ThemedText type="body" style={{ color: filter === "debtors" ? theme.error : theme.textSecondary, textAlign: "left" }}>
+            بدهکاران
+          </ThemedText>
         </Pressable>
       </View>
 
@@ -166,7 +248,7 @@ export default function PatientsScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptySearch}>
-              <ThemedText style={{ color: theme.textSecondary }}>
+              <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "left" }}>
                 {t("noPatients")}
               </ThemedText>
             </View>
@@ -203,6 +285,7 @@ const styles = StyleSheet.create({
   },
   patientCard: {
     marginBottom: Spacing.md,
+    paddingVertical: Spacing.md,
   },
   patientHeader: {
     flexDirection: "row",

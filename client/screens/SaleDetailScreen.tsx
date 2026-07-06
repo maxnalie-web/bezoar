@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { View, StyleSheet, Alert, Pressable } from "react-native";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { View, StyleSheet, Alert, Pressable, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
@@ -12,8 +12,25 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { getSales, getPatients, getDrugs, saveSale, updateSale, getInstallments, updateInstallment } from "@/lib/storage";
+import {
+  getSales,
+  getPatients,
+  getDrugs,
+  saveSale,
+  updateSale,
+  getInstallments,
+  updateInstallment,
+} from "@/lib/storage";
 import { Patient, Drug, PaymentStatus, Installment } from "@/types/models";
+
+import dayjs from "dayjs";
+import jalaliday from "jalaliday";
+
+dayjs.extend(jalaliday);
+
+// Shift section headers slightly to the left (relative to screen width)
+// (Smaller absolute shift than before so headers sit a bit more to the right)
+const SECTION_HEADER_SHIFT_X = -Math.round(Dimensions.get("window").width * 0.03);
 
 export default function SaleDetailScreen() {
   const { theme } = useTheme();
@@ -28,16 +45,27 @@ export default function SaleDetailScreen() {
   const [drugs, setDrugs] = useState<Drug[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
+  const [selectedExtraDrugIds, setSelectedExtraDrugIds] = useState<string[]>([]);
+  const [showExtraDrugPicker, setShowExtraDrugPicker] = useState(false);
   const [showPatientPicker, setShowPatientPicker] = useState(false);
   const [showDrugPicker, setShowDrugPicker] = useState(false);
   const [installments, setInstallments] = useState<Installment[]>([]);
+  const [isGift, setIsGift] = useState(false);
+
+  const mainDrugName = "Bezoar";
+  const mainDrugId = selectedDrug?.id;
+
+  const extraDrugs = useMemo(() => {
+    // Extra (side) drugs are any drugs except the main Bezoar drug.
+    return drugs.filter((d) => d.name !== mainDrugName);
+  }, [drugs]);
 
   const [form, setForm] = useState({
     bottleCount: "1",
     unitPrice: "",
     paymentStatus: "unpaid" as PaymentStatus,
-    purchaseDate: new Date().toISOString().split("T")[0],
-    deliveryDate: new Date().toISOString().split("T")[0],
+    purchaseDate: dayjs().calendar("jalali").format("YYYY-MM-DD"),
+    deliveryDate: dayjs().calendar("jalali").format("YYYY-MM-DD"),
     installmentCount: "",
     installmentAmount: "",
   });
@@ -59,29 +87,39 @@ export default function SaleDetailScreen() {
     setPatients(patientsData);
     setDrugs(drugsData);
 
-    if (drugsData.length > 0 && !selectedDrug) {
-      setSelectedDrug(drugsData[0]);
-      setForm((prev) => ({ ...prev, unitPrice: drugsData[0].salePrice.toString() }));
+    const mainDrug = drugsData.find((d) => d.name === "Bezoar");
+    if (mainDrug) {
+      setSelectedDrug(mainDrug);
+      setForm((prev) => ({ ...prev, unitPrice: mainDrug.salePrice.toString() }));
     }
 
     if (saleId) {
       const sales = await getSales();
       const sale = sales.find((s) => s.id === saleId);
       if (sale) {
+        const gift = (sale as any).isGift === true;
+        setIsGift(gift);
+
         const patient = patientsData.find((p) => p.id === sale.patientId);
-        const drug = drugsData.find((d) => d.id === sale.drugId);
+        const drug = drugsData.find((d) => d.id === (sale as any).drugId);
         setSelectedPatient(patient || null);
-        setSelectedDrug(drug || null);
+        setSelectedDrug((prev) => prev ?? drug ?? null);
+
+        const auxiliaryIds = Array.isArray((sale as any).auxiliaryDrugs)
+          ? ((sale as any).auxiliaryDrugs as any[]).map((d) => d.drugId)
+          : [];
+        setSelectedExtraDrugIds(auxiliaryIds);
+
         setForm({
           bottleCount: sale.bottleCount.toString(),
-          unitPrice: sale.unitPrice.toString(),
-          paymentStatus: sale.paymentStatus,
-          purchaseDate: sale.purchaseDate.split("T")[0],
-          deliveryDate: sale.deliveryDate.split("T")[0],
-          installmentCount: sale.installmentCount?.toString() || "",
-          installmentAmount: sale.installmentAmount?.toString() || "",
+          unitPrice: gift ? "0" : sale.unitPrice.toString(),
+          paymentStatus: gift ? ("paid" as PaymentStatus) : sale.paymentStatus,
+          purchaseDate: dayjs(sale.purchaseDate).calendar("jalali").format("YYYY-MM-DD"),
+          deliveryDate: dayjs(sale.deliveryDate).calendar("jalali").format("YYYY-MM-DD"),
+          installmentCount: gift ? "" : sale.installmentCount?.toString() || "",
+          installmentAmount: gift ? "" : sale.installmentAmount?.toString() || "",
         });
-        
+
         const allInstallments = await getInstallments();
         const saleInstallments = allInstallments
           .filter((i) => i.saleId === saleId)
@@ -99,22 +137,37 @@ export default function SaleDetailScreen() {
     const paidDate = newStatus === "paid" ? new Date().toISOString() : undefined;
 
     await updateInstallment(installmentId, { status: newStatus, paidDate });
-    
+
     setInstallments((prev) =>
-      prev.map((i) =>
-        i.id === installmentId ? { ...i, status: newStatus, paidDate } : i
-      )
+      prev.map((i) => (i.id === installmentId ? { ...i, status: newStatus, paidDate } : i))
     );
   };
 
-  const calculateTotal = () => {
+  const calculateMainTotal = () => {
+    if (isGift) return 0;
     const bottles = parseInt(form.bottleCount) || 0;
     const price = parseFloat(form.unitPrice) || 0;
     return bottles * price;
   };
 
+  const calculateAuxiliaryTotal = () => {
+    if (isGift) return 0;
+    return selectedExtraDrugIds.reduce((sum, id) => {
+      const drug = drugs.find((d) => d.id === id);
+      return sum + (drug ? drug.salePrice : 0);
+    }, 0);
+  };
+
+  const calculateGrandTotal = () => {
+    return calculateMainTotal() + calculateAuxiliaryTotal();
+  };
+
   const handleSave = async () => {
     if (!selectedPatient || !selectedDrug) {
+      Alert.alert(
+        t("error"),
+        !selectedPatient ? "لطفاً یک بیمار انتخاب کنید" : "لطفاً یک دارو انتخاب کنید"
+      );
       return;
     }
 
@@ -123,17 +176,44 @@ export default function SaleDetailScreen() {
       const saleData = {
         patientId: selectedPatient.id,
         drugId: selectedDrug.id,
+        isGift: isGift,
+
+        auxiliaryDrugs: isGift
+          ? []
+          : selectedExtraDrugIds.map((id) => {
+              const drug = drugs.find((d) => d.id === id)!;
+              return {
+                drugId: drug.id,
+                quantity: 1,
+                unitPrice: drug.salePrice,
+                totalPrice: drug.salePrice,
+              };
+            }),
+
         bottleCount: parseInt(form.bottleCount),
-        unitPrice: parseFloat(form.unitPrice) || selectedDrug.salePrice,
-        totalPrice: calculateTotal(),
-        purchaseDate: new Date(form.purchaseDate).toISOString(),
-        deliveryDate: new Date(form.deliveryDate).toISOString(),
-        paymentStatus: form.paymentStatus,
+        unitPrice: isGift ? 0 : parseFloat(form.unitPrice) || selectedDrug.salePrice,
+        totalPrice: isGift ? 0 : calculateGrandTotal(),
+
+        purchaseDate: dayjs(form.purchaseDate, "YYYY-MM-DD")
+          .calendar("jalali")
+          .toDate()
+          .toISOString(),
+        deliveryDate: dayjs(form.deliveryDate, "YYYY-MM-DD")
+          .calendar("jalali")
+          .toDate()
+          .toISOString(),
+
+        paymentStatus: isGift ? ("paid" as PaymentStatus) : form.paymentStatus,
+
         installmentCount:
-          form.paymentStatus === "installment" ? parseInt(form.installmentCount) || undefined : undefined,
+          !isGift && form.paymentStatus === "installment"
+            ? parseInt(form.installmentCount) || undefined
+            : undefined,
         installmentAmount:
-          form.paymentStatus === "installment" ? parseFloat(form.installmentAmount) || undefined : undefined,
-      };
+          !isGift && form.paymentStatus === "installment"
+            ? parseFloat(form.installmentAmount) || undefined
+            : undefined,
+      } as any;
 
       if (saleId) {
         await updateSale(saleId, saleData);
@@ -160,19 +240,23 @@ export default function SaleDetailScreen() {
     const isSelected = form.paymentStatus === status;
     return (
       <Pressable
-        onPress={() => updateField("paymentStatus", status)}
+        onPress={() => {
+          if (isGift) return;
+          updateField("paymentStatus", status);
+        }}
         style={[
           styles.statusButton,
           { borderColor: theme.glassBorder },
-          isSelected && [styles.statusButtonActive, { backgroundColor: theme.accent + "20", borderColor: theme.accent }],
+          isSelected && [
+            styles.statusButtonActive,
+            { backgroundColor: theme.accent + "20", borderColor: theme.accent },
+          ],
+          isGift && { opacity: 0.6 },
         ]}
       >
         <ThemedText
           type="small"
-          style={[
-            styles.statusText,
-            { color: isSelected ? theme.accent : theme.textSecondary },
-          ]}
+          style={[styles.statusText, { color: isSelected ? theme.accent : theme.textSecondary }]}
         >
           {label}
         </ThemedText>
@@ -184,18 +268,41 @@ export default function SaleDetailScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <KeyboardAwareScrollViewCompat
         style={styles.scrollView}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: insets.bottom + Spacing.xl },
-        ]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xl }]}
         showsVerticalScrollIndicator={false}
       >
-        <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.accent, textAlign: "right" }]}>
-          {t("selectPatient")}
-        </ThemedText>
+        {isGift && (
+          <GlassCard
+            style={{
+              marginBottom: Spacing.lg,
+              backgroundColor: theme.warning + "20",
+              borderColor: theme.warning,
+              borderWidth: 1,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row-reverse",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: Spacing.sm,
+              }}
+            >
+              <Feather name="gift" size={18} color={theme.warning} />
+              <ThemedText style={{ color: theme.warning, fontWeight: "600" }}>
+                این فروش به‌صورت هدیه ثبت می‌شود
+              </ThemedText>
+            </View>
+          </GlassCard>
+        )}
+        <View style={styles.sectionHeader}>
+          <ThemedText type="small" style={styles.sectionHeaderText}>
+            {t("selectPatient")}
+          </ThemedText>
+        </View>
 
         {showPatientPicker ? (
-          <GlassCard style={styles.pickerCard}>
+          <GlassCard style={{ ...styles.pickerCard, marginBottom: Spacing.lg }}>
             {patients.map((patient) => (
               <Pressable
                 key={patient.id}
@@ -205,35 +312,31 @@ export default function SaleDetailScreen() {
                 }}
                 style={[
                   styles.pickerItem,
-                  selectedPatient?.id === patient.id && {
-                    backgroundColor: theme.accent + "20",
-                  },
+                  selectedPatient?.id === patient.id && { backgroundColor: theme.accent + "20" },
                 ]}
               >
-                <ThemedText style={{ textAlign: "right" }}>{`${patient.firstName} ${patient.lastName}`}</ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                <ThemedText style={styles.centerText}>{`${patient.firstName} ${patient.lastName}`}</ThemedText>
+                <ThemedText type="small" style={[{ color: theme.textSecondary }, styles.centerText]}>
                   {patient.nationalId}
                 </ThemedText>
               </Pressable>
             ))}
             {patients.length === 0 ? (
-              <ThemedText style={{ color: theme.textSecondary, textAlign: "center", padding: Spacing.lg }}>
+              <ThemedText style={[{ color: theme.textSecondary, textAlign: "center", padding: Spacing.lg }, styles.centerText]}>
                 بیماری یافت نشد. ابتدا یک بیمار اضافه کنید.
               </ThemedText>
             ) : null}
           </GlassCard>
         ) : (
-          <GlassCard onPress={() => setShowPatientPicker(true)} style={styles.selectorCard}>
+          <GlassCard onPress={() => setShowPatientPicker(true)} style={{ ...styles.selectorCard, marginBottom: Spacing.lg }}>
             <View style={[styles.selectorContent, styles.selectorContentRTL]}>
               <Feather name="user" size={20} color={theme.accent} />
               <View style={[styles.selectorText, styles.selectorTextRTL]}>
-                <ThemedText type="body" style={{ textAlign: "right" }}>
-                  {selectedPatient
-                    ? `${selectedPatient.firstName} ${selectedPatient.lastName}`
-                    : "انتخاب بیمار"}
+                <ThemedText type="body" style={styles.centerText}>
+                  {selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "انتخاب بیمار"}
                 </ThemedText>
                 {selectedPatient ? (
-                  <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                  <ThemedText type="small" style={[{ color: theme.textSecondary }, styles.centerText]}>
                     {selectedPatient.nationalId}
                   </ThemedText>
                 ) : null}
@@ -243,41 +346,104 @@ export default function SaleDetailScreen() {
           </GlassCard>
         )}
 
-        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl, color: theme.accent, textAlign: "right" }]}>
-          {t("selectDrug")}
-        </ThemedText>
+        <View style={styles.sectionHeader}>
+          <ThemedText type="small" style={styles.sectionHeaderText}>
+            {t("selectDrug")}
+          </ThemedText>
+        </View>
 
-        {showDrugPicker ? (
-          <GlassCard style={styles.pickerCard}>
-            {drugs.map((drug) => (
-              <Pressable
-                key={drug.id}
-                onPress={() => {
-                  setSelectedDrug(drug);
-                  updateField("unitPrice", drug.salePrice.toString());
-                  setShowDrugPicker(false);
-                }}
-                style={[
-                  styles.pickerItem,
-                  selectedDrug?.id === drug.id && { backgroundColor: theme.accent + "20" },
-                ]}
-              >
-                <ThemedText style={{ textAlign: "right" }}>{drug.name}</ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
-                  {formatCurrency(drug.salePrice)} هر {drug.unit}
+        {/* Primary drug (fixed) */}
+        <GlassCard style={{ ...styles.selectorCard, marginBottom: Spacing.lg }}>
+          <View style={[styles.selectorContent, styles.selectorContentRTL]}>
+            <Feather name="package" size={20} color={theme.accent} />
+            <View style={[styles.selectorText, styles.selectorTextRTL]}>
+              <ThemedText type="body" style={[styles.centerText, { fontSize: 18, fontWeight: "600" }]}>
+                {selectedDrug?.name || "Bezoar"}
+              </ThemedText>
+              {selectedDrug ? (
+                <ThemedText type="small" style={[{ color: theme.textSecondary, fontSize: 15 }, styles.centerText]}>
+                  {formatCurrency(selectedDrug.salePrice)} هر {selectedDrug.unit}
                 </ThemedText>
-              </Pressable>
-            ))}
+              ) : null}
+              <ThemedText type="small" style={[{ color: theme.textSecondary, marginTop: 4, fontSize: 14 }, styles.centerText]}>
+                داروی اصلی فروش (قابل تغییر نیست)
+              </ThemedText>
+            </View>
+          </View>
+        </GlassCard>
+
+        {/* Extra (side) drugs */}
+        <View style={styles.sectionHeader}>
+          <ThemedText type="small" style={styles.sectionHeaderText}>
+            داروهای جانبی
+          </ThemedText>
+        </View>
+
+        {showExtraDrugPicker ? (
+          <GlassCard style={{ ...styles.pickerCard, marginBottom: Spacing.lg }}>
+            {extraDrugs.map((drug) => {
+              const selected = selectedExtraDrugIds.includes(drug.id);
+              return (
+                <Pressable
+                  key={drug.id}
+                  onPress={() => {
+                    setSelectedExtraDrugIds((prev) =>
+                      selected ? prev.filter((id) => id !== drug.id) : [...prev, drug.id]
+                    );
+                  }}
+                  style={[styles.pickerItem, selected && { backgroundColor: theme.accent + "20" }]}
+                >
+                  <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between" }}>
+                    <View style={{ flex: 1 }}>
+                      <ThemedText style={styles.centerText}>{drug.name}</ThemedText>
+                      <ThemedText type="small" style={[{ color: theme.textSecondary }, styles.centerText]}>
+                        {formatCurrency(drug.salePrice)} هر {drug.unit}
+                      </ThemedText>
+                    </View>
+                    <View
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 6,
+                        borderWidth: 2,
+                        borderColor: selected ? theme.accent : theme.textSecondary,
+                        backgroundColor: selected ? theme.accent : "transparent",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginLeft: Spacing.md,
+                      }}
+                    >
+                      {selected ? <Feather name="check" size={14} color="#fff" /> : null}
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            })}
+
+            {extraDrugs.length === 0 ? (
+              <ThemedText style={[{ color: theme.textSecondary, textAlign: "center", padding: Spacing.lg }, styles.centerText]}>
+                داروی جانبی برای انتخاب وجود ندارد.
+              </ThemedText>
+            ) : null}
+
+            <Button onPress={() => setShowExtraDrugPicker(false)} style={{ marginTop: Spacing.sm }}>
+              بستن
+            </Button>
           </GlassCard>
         ) : (
-          <GlassCard onPress={() => setShowDrugPicker(true)} style={styles.selectorCard}>
+          <GlassCard onPress={() => setShowExtraDrugPicker(true)} style={{ ...styles.selectorCard, marginBottom: Spacing.lg }}>
             <View style={[styles.selectorContent, styles.selectorContentRTL]}>
-              <Feather name="package" size={20} color={theme.accent} />
+              <Feather name="plus-circle" size={20} color={theme.accent} />
               <View style={[styles.selectorText, styles.selectorTextRTL]}>
-                <ThemedText type="body" style={{ textAlign: "right" }}>{selectedDrug?.name || "انتخاب دارو"}</ThemedText>
-                {selectedDrug ? (
-                  <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
-                    {formatCurrency(selectedDrug.salePrice)} هر {selectedDrug.unit}
+                <ThemedText type="body" style={styles.centerText}>
+                  {selectedExtraDrugIds.length ? `تعداد انتخاب‌شده: ${selectedExtraDrugIds.length}` : "انتخاب داروهای جانبی"}
+                </ThemedText>
+                {selectedExtraDrugIds.length ? (
+                  <ThemedText type="small" style={[{ color: theme.textSecondary }, styles.centerText]}>
+                    {selectedExtraDrugIds
+                      .map((id) => drugs.find((d) => d.id === id)?.name)
+                      .filter(Boolean)
+                      .join("، ")}
                   </ThemedText>
                 ) : null}
               </View>
@@ -286,9 +452,67 @@ export default function SaleDetailScreen() {
           </GlassCard>
         )}
 
-        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl, color: theme.accent, textAlign: "right" }]}>
-          جزئیات خرید
-        </ThemedText>
+        {/* Gift toggle */}
+        <GlassCard style={{ marginBottom: Spacing.lg }}>
+          <View
+            style={{
+              flexDirection: "row-reverse",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <ThemedText>این فروش هدیه است</ThemedText>
+
+            <Pressable
+              onPress={() => {
+                setIsGift((prev) => {
+                  const next = !prev;
+
+                  setForm((f) =>
+                    next
+                      ? {
+                          ...f,
+                          paymentStatus: "paid" as PaymentStatus,
+                          installmentCount: "",
+                          installmentAmount: "",
+                          unitPrice: "0",
+                        }
+                      : {
+                          ...f,
+                          unitPrice: selectedDrug?.salePrice?.toString() ?? f.unitPrice,
+                        }
+                  );
+
+                  return next;
+                });
+              }}
+              style={{
+                width: 44,
+                height: 24,
+                borderRadius: 12,
+                backgroundColor: isGift ? theme.accent : theme.glassBorder,
+                justifyContent: "center",
+                paddingHorizontal: 4,
+              }}
+            >
+              <View
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  backgroundColor: "#fff",
+                  alignSelf: isGift ? "flex-start" : "flex-end",
+                }}
+              />
+            </Pressable>
+          </View>
+        </GlassCard>
+
+        <View style={styles.sectionHeader}>
+          <ThemedText type="small" style={styles.sectionHeaderText}>
+            جزئیات خرید
+          </ThemedText>
+        </View>
 
         <FormInput
           label={t("bottleCount")}
@@ -305,14 +529,29 @@ export default function SaleDetailScreen() {
           placeholder="قیمت هر بطری"
           keyboardType="numeric"
           rtl={true}
+          editable={!isGift}
         />
 
-        <GlassCard style={styles.totalCard}>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            {t("totalPrice")}
+        <GlassCard style={{ ...styles.totalCard, ...styles.centerBoxContent, marginBottom: Spacing.lg }}>
+          <ThemedText type="small" style={[{ color: theme.textSecondary, fontSize: 15 }, styles.centerText]}>
+            جمع داروی اصلی
           </ThemedText>
-          <ThemedText type="h3" style={{ color: theme.accent }}>
-            {formatCurrency(calculateTotal())}
+          <ThemedText type="body" style={[{ color: theme.text, fontSize: 18, fontWeight: "600" }, styles.centerText]}>
+            {formatCurrency(calculateMainTotal())}
+          </ThemedText>
+
+          <ThemedText type="small" style={[{ color: theme.textSecondary, marginTop: 8, fontSize: 15 }, styles.centerText]}>
+            جمع داروهای جانبی
+          </ThemedText>
+          <ThemedText type="body" style={[{ color: theme.text, fontSize: 18, fontWeight: "600" }, styles.centerText]}>
+            {formatCurrency(calculateAuxiliaryTotal())}
+          </ThemedText>
+
+          <ThemedText type="small" style={[{ color: theme.textSecondary, marginTop: 12, fontSize: 15 }, styles.centerText]}>
+            مبلغ کل
+          </ThemedText>
+          <ThemedText type="h3" style={[{ color: isGift ? theme.textSecondary : theme.accent, fontSize: 22, fontWeight: "700" }, styles.centerText]}>
+            {formatCurrency(calculateGrandTotal())}
           </ThemedText>
         </GlassCard>
 
@@ -331,9 +570,11 @@ export default function SaleDetailScreen() {
           rtl={true}
         />
 
-        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl, color: theme.accent, textAlign: "right" }]}>
-          {t("paymentStatus")}
-        </ThemedText>
+        <View style={styles.sectionHeader}>
+          <ThemedText type="small" style={styles.sectionHeaderText}>
+            {t("paymentStatus")}
+          </ThemedText>
+        </View>
 
         <View style={[styles.statusContainer, styles.statusContainerRTL]}>
           <PaymentStatusButton status="paid" label={t("paid")} />
@@ -341,7 +582,7 @@ export default function SaleDetailScreen() {
           <PaymentStatusButton status="installment" label={t("installment")} />
         </View>
 
-        {form.paymentStatus === "installment" ? (
+        {!isGift && form.paymentStatus === "installment" ? (
           <View style={styles.installmentSection}>
             <FormInput
               label="تعداد اقساط"
@@ -364,19 +605,20 @@ export default function SaleDetailScreen() {
 
         {saleId && installments.length > 0 ? (
           <View style={styles.installmentsListSection}>
-            <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.accent, textAlign: "right" }]}>
-              {t("installmentsStatus")}
-            </ThemedText>
-            
-            <GlassCard style={styles.installmentsSummary}>
+            <View style={styles.sectionHeader}>
+              <ThemedText type="small" style={styles.sectionHeaderText}>
+                {t("installmentsStatus")}
+              </ThemedText>
+            </View>
+
+            <GlassCard style={{ ...styles.installmentsSummary, marginBottom: Spacing.lg }}>
               <View style={styles.summaryRow}>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                <ThemedText type="small" style={[{ color: theme.textSecondary }, styles.centerText]}>
                   {t("paidCount")}: {installments.filter((i) => i.status === "paid").length} / {installments.length}
                 </ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {t("remainingCount")}: {formatCurrency(
-                    installments.filter((i) => i.status === "unpaid").reduce((sum, i) => sum + i.amount, 0)
-                  )}
+                <ThemedText type="small" style={[{ color: theme.textSecondary }, styles.centerText]}>
+                  {t("remainingCount")}:{" "}
+                  {formatCurrency(installments.filter((i) => i.status === "unpaid").reduce((sum, i) => sum + i.amount, 0))}
                 </ThemedText>
               </View>
             </GlassCard>
@@ -387,7 +629,7 @@ export default function SaleDetailScreen() {
                 onPress={() => toggleInstallmentStatus(inst.id)}
                 style={[
                   styles.installmentItem,
-                  { 
+                  {
                     backgroundColor: theme.capsuleBackground,
                     borderColor: inst.status === "paid" ? theme.success + "40" : theme.glassBorder,
                   },
@@ -401,16 +643,14 @@ export default function SaleDetailScreen() {
                       inst.status === "paid" && { backgroundColor: theme.success },
                     ]}
                   >
-                    {inst.status === "paid" ? (
-                      <Feather name="check" size={14} color="#fff" />
-                    ) : null}
+                    {inst.status === "paid" ? <Feather name="check" size={14} color="#fff" /> : null}
                   </View>
                 </View>
                 <View style={styles.installmentInfo}>
-                  <ThemedText type="body" style={{ textAlign: "right" }}>
+                  <ThemedText type="body" style={styles.centerText}>
                     {t("installmentNumber")} {inst.installmentNumber}
                   </ThemedText>
-                  <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                  <ThemedText type="small" style={[{ color: theme.textSecondary }, styles.centerText]}>
                     {formatCurrency(inst.amount)}
                   </ThemedText>
                 </View>
@@ -420,12 +660,14 @@ export default function SaleDetailScreen() {
                     style={{
                       color: inst.status === "paid" ? theme.success : theme.warning,
                       fontWeight: "600",
+                      textAlign: "center",
+                      alignSelf: "center",
                     }}
                   >
                     {inst.status === "paid" ? t("paidInstallment") : t("unpaidInstallment")}
                   </ThemedText>
                   {inst.paidDate ? (
-                    <ThemedText type="small" style={{ color: theme.textSecondary, fontSize: 10 }}>
+                    <ThemedText type="small" style={[{ color: theme.textSecondary, fontSize: 10 }, styles.centerText]}>
                       {new Date(inst.paidDate).toLocaleDateString("fa-IR")}
                     </ThemedText>
                   ) : null}
@@ -472,12 +714,11 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
   selectorTextRTL: {
-    marginLeft: 0,
     marginRight: Spacing.md,
   },
   pickerCard: {
     marginBottom: Spacing.md,
-    maxHeight: 200,
+    maxHeight: 260,
   },
   pickerItem: {
     padding: Spacing.md,
@@ -485,7 +726,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   totalCard: {
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: Spacing.lg,
   },
   statusContainer: {
@@ -548,5 +789,25 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: Spacing.xl,
+  },
+  sectionHeader: {
+    marginTop: Spacing["3xl"],
+    marginBottom: Spacing["3xl"],
+    alignSelf: "flex-start",
+    transform: [{ translateX: SECTION_HEADER_SHIFT_X }],
+  },
+  sectionHeaderText: {
+    fontWeight: "700",
+    fontSize: 20,
+    textAlign: "left",
+  },
+  centerBoxContent: {
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+  },
+  centerText: {
+    textAlign: "center",
+    alignSelf: "center",
   },
 });

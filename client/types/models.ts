@@ -26,19 +26,42 @@ export interface Drug {
   salePrice: number;
   unit: string;
   description: string;
+
+  // Bezoar = داروی اصلی (قابل حذف نیست)
+  isMain?: boolean;
+
   createdAt: string;
   updatedAt: string;
 }
 
 export type PaymentStatus = "paid" | "installment" | "unpaid";
 
+export interface AuxiliaryDrug {
+  drugId: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
 export interface Sale {
   id: string;
   patientId: string;
+
+  // داروی اصلی (همیشه Bezoar)
   drugId: string;
   bottleCount: number;
   unitPrice: number;
-  totalPrice: number;
+
+  // داروهای جانبی (اختیاری)
+  auxiliaryDrugs?: AuxiliaryDrug[];
+
+  mainTotalPrice: number;      // مجموع داروی اصلی
+  auxiliaryTotalPrice: number; // مجموع داروهای جانبی
+  totalPrice: number;          // مجموع کل (اصلی + جانبی)
+
+  // ✅ فروش هدیه
+  isGift?: boolean;
+
   purchaseDate: string;
   deliveryDate: string;
   paymentStatus: PaymentStatus;

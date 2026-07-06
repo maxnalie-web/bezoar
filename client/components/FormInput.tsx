@@ -1,10 +1,12 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import {
   View,
   TextInput,
   StyleSheet,
   TextInputProps,
+  TextStyle,
   Pressable,
+  ViewStyle,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
@@ -13,87 +15,124 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 interface FormInputProps extends TextInputProps {
-  label: string;
+  label?: React.ReactNode;
   error?: string;
   icon?: keyof typeof Feather.glyphMap;
   onIconPress?: () => void;
+  labelStyle?: TextStyle | TextStyle[];
+  containerStyle?: ViewStyle | ViewStyle[];
   rtl?: boolean;
 }
 
-export function FormInput({
-  label,
-  error,
-  icon,
-  onIconPress,
-  style,
-  rtl = false,
-  ...props
-}: FormInputProps) {
-  const { theme } = useTheme();
+export const FormInput = forwardRef<any, FormInputProps>(
+  (
+    {
+      label,
+      error,
+      icon,
+      onIconPress,
+      style,
+      labelStyle,
+      containerStyle,
+      rtl = true,
+      placeholderTextColor,
+      ...props
+    },
+    ref
+  ) => {
+    const { theme } = useTheme();
 
-  return (
-    <View style={styles.container}>
-      <ThemedText
-        type="small"
-        style={[
-          styles.label,
-          { color: theme.textSecondary },
-          rtl && styles.labelRTL,
-        ]}
-      >
-        {label}
-      </ThemedText>
-      <View
-        style={[
-          styles.inputContainer,
-          rtl && styles.inputContainerRTL,
-          {
-            backgroundColor: theme.backgroundSecondary,
-            borderColor: error ? theme.error : theme.glassBorder,
-          },
-        ]}
-      >
-        <TextInput
-          style={[
-            styles.input,
-            { color: theme.text },
-            icon ? styles.inputWithIcon : null,
-            rtl && styles.inputRTL,
-            style,
-          ]}
-          placeholderTextColor={theme.textSecondary}
-          textAlign="center"
-          {...props}
-        />
-        {icon ? (
-          <Pressable
-            onPress={onIconPress}
-            style={[styles.iconContainer, rtl && styles.iconContainerRTL]}
-            hitSlop={8}
+    return (
+      <View style={styles.container}>
+        {label ? (
+          <ThemedText
+            type="small"
+            style={[
+              styles.label,
+              {
+                color: theme.textSecondary,
+                backgroundColor: theme.backgroundRoot,
+              },
+              typeof label === "string" &&
+                (label === "اطلاعات پزشکی" || label === "اطلاعات هویتی") && {
+                  // move those section labels up — use an existing spacing key
+                  top: -Spacing["5xl"],
+                  marginBottom: Spacing.lg,
+                  fontSize: 22,
+                  fontWeight: "600",
+                },
+              labelStyle,
+            ]}
           >
-            <Feather name={icon} size={20} color={theme.textSecondary} />
-          </Pressable>
+            {label}
+          </ThemedText>
+        ) : null}
+        <View
+          style={[
+            styles.inputContainer,
+            rtl && styles.inputContainerRTL,
+            {
+              backgroundColor: theme.backgroundSecondary,
+              borderColor: error ? theme.error : theme.glassBorder,
+            },
+            containerStyle,
+          ]}
+        >
+          <TextInput
+            ref={ref as any}
+            style={[
+              styles.input,
+              icon ? (rtl ? styles.inputWithIconRTL : styles.inputWithIcon) : null,
+              style,
+              { color: theme.text },
+            ]}
+            placeholderTextColor={placeholderTextColor ?? theme.textSecondary}
+            placeholder={props.placeholder}
+            editable={props.editable ?? true}
+            selectionColor={theme.accent}
+            allowFontScaling={true}
+            textAlignVertical="center"
+            underlineColorAndroid="transparent"
+            {...props}
+          />
+          {icon ? (
+            <Pressable
+              onPress={onIconPress}
+              style={[styles.iconContainer, rtl && styles.iconContainerRTL]}
+              hitSlop={12}
+            >
+              <Feather name={icon} size={20} color={theme.textSecondary} />
+            </Pressable>
+          ) : null}
+        </View>
+        {error ? (
+          <ThemedText
+            type="small"
+            style={[styles.error, { color: theme.error }, rtl && styles.errorRTL]}
+          >
+            {error}
+          </ThemedText>
         ) : null}
       </View>
-      {error ? (
-        <ThemedText
-          type="small"
-          style={[styles.error, { color: theme.error }, rtl && styles.errorRTL]}
-        >
-          {error}
-        </ThemedText>
-      ) : null}
-    </View>
-  );
-}
+    );
+  }
+);
+
+FormInput.displayName = "FormInput";
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing["2xl"],
+    paddingTop: Spacing.lg,
   },
   label: {
-    marginBottom: Spacing.xs,
+    position: "absolute",
+    top: -Spacing.md,
+    right: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
     fontWeight: "500",
+    fontSize: 18,
+    zIndex: 2,
   },
   labelRTL: {
     textAlign: "right",
@@ -103,26 +142,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: BorderRadius.sm,
     borderWidth: 1,
-    height: Spacing.inputHeight,
+    minHeight: 44,
+    marginTop: Spacing.xs,
   },
   inputContainerRTL: {
     flexDirection: "row-reverse",
   },
   input: {
     flex: 1,
-    height: "100%",
     paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     fontSize: 16,
+    includeFontPadding: false,
+    textAlign: "right",
+    lineHeight: 20,
   },
   inputRTL: {
-    textAlign: "right",
+    textAlign: "left",
   },
   inputWithIcon: {
     paddingRight: Spacing["3xl"],
   },
+  inputWithIconRTL: {
+    paddingLeft: Spacing["3xl"],
+  },
   iconContainer: {
     position: "absolute",
     right: Spacing.md,
+    zIndex: 3,
+    elevation: 3,
   },
   iconContainerRTL: {
     right: undefined,
@@ -130,6 +178,7 @@ const styles = StyleSheet.create({
   },
   error: {
     marginTop: Spacing.xs,
+    fontSize: 18,
   },
   errorRTL: {
     textAlign: "right",

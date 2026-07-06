@@ -40,6 +40,7 @@ export default function DrugDetailScreen() {
   useEffect(() => {
     navigation.setOptions({
       headerTitle: drugId ? t("editDrug") : t("addDrug"),
+      headerTitleAlign: "right",
     });
   }, [drugId, navigation, t]);
 
@@ -60,14 +61,24 @@ export default function DrugDetailScreen() {
   };
 
   const handleSave = async () => {
+    if (!form.name.trim()) {
+      Alert.alert(t("error"), "نام دارو الزامی است");
+      return;
+    }
+    const purchaseP = parseFloat(form.purchasePrice) || 0;
+    const saleP = parseFloat(form.salePrice) || 0;
+    if (purchaseP < 0 || saleP < 0) {
+      Alert.alert(t("error"), "قیمت نمی‌تواند منفی باشد");
+      return;
+    }
     setLoading(true);
     try {
       const drugData = {
         name: form.name,
         code: form.code,
         type: form.type,
-        purchasePrice: parseFloat(form.purchasePrice) || 0,
-        salePrice: parseFloat(form.salePrice) || 0,
+        purchasePrice: purchaseP,
+        salePrice: saleP,
         unit: form.unit,
         description: form.description,
       };
@@ -99,7 +110,10 @@ export default function DrugDetailScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.accent, textAlign: "right" }]}>
+        <ThemedText
+          type="title"
+          style={[styles.sectionTitle, { color: theme.textPrimary }]}
+        >
           اطلاعات دارو
         </ThemedText>
 
@@ -108,24 +122,27 @@ export default function DrugDetailScreen() {
           value={form.name}
           onChangeText={(value) => updateField("name", value)}
           placeholder={t("enterDrugName")}
-          rtl={true}
+          rtl={false}
         />
         <FormInput
           label={t("drugCode")}
           value={form.code}
           onChangeText={(value) => updateField("code", value)}
           placeholder="مثال: BZR001"
-          rtl={true}
+          rtl={false}
         />
         <FormInput
           label={t("drugType")}
           value={form.type}
           onChangeText={(value) => updateField("type", value)}
           placeholder="مثال: داروی گیاهی"
-          rtl={true}
+          rtl={false}
         />
 
-        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl, color: theme.accent, textAlign: "right" }]}>
+        <ThemedText
+          type="title"
+          style={[styles.sectionTitle, { color: theme.textPrimary }]}
+        >
           قیمت‌گذاری
         </ThemedText>
 
@@ -135,7 +152,7 @@ export default function DrugDetailScreen() {
           onChangeText={(value) => updateField("purchasePrice", value)}
           placeholder={t("enterPurchasePrice")}
           keyboardType="numeric"
-          rtl={true}
+          rtl={false}
         />
         <FormInput
           label={`${t("salePrice")} (${t("toman")})`}
@@ -143,17 +160,20 @@ export default function DrugDetailScreen() {
           onChangeText={(value) => updateField("salePrice", value)}
           placeholder={t("enterSalePrice")}
           keyboardType="numeric"
-          rtl={true}
+          rtl={false}
         />
         <FormInput
           label={t("unit")}
           value={form.unit}
           onChangeText={(value) => updateField("unit", value)}
           placeholder={`مثال: ${t("bottle")}`}
-          rtl={true}
+          rtl={false}
         />
 
-        <ThemedText type="h4" style={[styles.sectionTitle, { marginTop: Spacing.xl, color: theme.accent, textAlign: "right" }]}>
+        <ThemedText
+          type="title"
+          style={[styles.sectionTitle, { color: theme.textPrimary }]}
+        >
           اطلاعات تکمیلی
         </ThemedText>
 
@@ -163,7 +183,7 @@ export default function DrugDetailScreen() {
           onChangeText={(value) => updateField("description", value)}
           placeholder="توضیحات دارو را وارد کنید"
           multiline
-          rtl={true}
+          rtl={false}
         />
 
         <Button onPress={handleSave} loading={loading} style={styles.saveButton}>
@@ -186,7 +206,9 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
   },
   sectionTitle: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.lg,
+    alignSelf: "flex-start",
   },
   saveButton: {
     marginTop: Spacing.xl,

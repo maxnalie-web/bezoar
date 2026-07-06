@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, Pressable, Alert, Switch } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Alert, Switch, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation, DrawerActions } from "@react-navigation/native";
@@ -20,25 +20,19 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
-  const handleAbout = () => {
-    Alert.alert(
-      `${t("about")} ${t("appName")}`,
-      `${t("appName")} ${t("version")} 1.0.0\n\n${t("appDescription")}\n\n${t("madeWithLove")} ❤️`,
-      [{ text: t("confirm") }]
-    );
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, styles.headerRTL, { paddingTop: insets.top + Spacing.md }]}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+        <View style={styles.menuButton} />
+        <ThemedText style={styles.headerTitle}>
+          {t("settings")}
+        </ThemedText>
         <Pressable
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
           style={styles.menuButton}
         >
           <Feather name="menu" size={24} color={theme.text} />
         </Pressable>
-        <ThemedText type="h3">{t("settings")}</ThemedText>
-        <View style={styles.menuButton} />
       </View>
 
       <ScrollView
@@ -50,16 +44,16 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-          <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary, textAlign: "right" }]}>
-            {t("appearance").toUpperCase()}
+          <ThemedText style={styles.sectionTitle}>
+            {t("appearance")}
           </ThemedText>
           <View style={styles.section}>
-            <View style={[styles.themeRow, { backgroundColor: theme.backgroundDefault }, styles.themeRowRTL]}>
-              <View style={[styles.themeIconContainer, styles.themeIconContainerRTL]}>
+            <View style={[styles.themeRow, { backgroundColor: theme.backgroundDefault }]}>
+              <View style={styles.themeIconContainer}>
                 <Feather name={isDark ? "moon" : "sun"} size={22} color={theme.accent} />
-                <View style={styles.themeTextRTL}>
-                  <ThemedText style={[styles.themeTitle, { textAlign: "right" }]}>{t("theme")}</ThemedText>
-                  <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                <View style={styles.themeTextBlock}>
+                  <ThemedText type="title" style={styles.themeTitle}>{t("theme")}</ThemedText>
+                  <ThemedText type="body" style={styles.themeSubtitle}>
                     {isDark ? t("darkMode") : t("lightMode")}
                   </ThemedText>
                 </View>
@@ -75,8 +69,8 @@ export default function SettingsScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-          <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary, textAlign: "right" }]}>
-            {t("dataManagement").toUpperCase()}
+          <ThemedText style={styles.sectionTitle}>
+            {t("dataManagement")}
           </ThemedText>
           <View style={styles.section}>
             <ListItem
@@ -84,14 +78,13 @@ export default function SettingsScreen() {
               subtitle="مدیریت پشتیبان‌های داده"
               leftIcon="database"
               onPress={() => (navigation as any).navigate("Backup")}
-              rtl={true}
             />
           </View>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-          <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary, textAlign: "right" }]}>
-            {t("about").toUpperCase()}
+          <ThemedText style={styles.sectionTitle}>
+            {t("about")}
           </ThemedText>
           <View style={styles.section}>
             <ListItem
@@ -99,7 +92,6 @@ export default function SettingsScreen() {
               subtitle={`${t("version")} 1.0.0`}
               leftIcon="info"
               onPress={handleAbout}
-              rtl={true}
             />
           </View>
         </Animated.View>
@@ -113,16 +105,16 @@ export default function SettingsScreen() {
                 contentFit="contain"
               />
             </View>
-            <ThemedText type="h4" style={styles.appName}>
+            <ThemedText type="title" style={{ marginBottom: Spacing.xs }}>
               {t("appName")}
             </ThemedText>
-            <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "center" }}>
+            <ThemedText type="body" style={{ textAlign: "center", color: theme.textSecondary }}>
               {t("patientDrugManagement")}
             </ThemedText>
-            <ThemedText type="small" style={[styles.madeWith, { color: theme.accent }]}>
+            <ThemedText type="caption" style={{ textAlign: "center", color: theme.accent }}>
               {t("madeWithLove")} ❤️
             </ThemedText>
-            <ThemedText type="small" style={[styles.version, { color: theme.textSecondary }]}>
+            <ThemedText type="caption" style={{ textAlign: "center", color: theme.textSecondary }}>
               {t("version")} 1.0.0
             </ThemedText>
           </GlassCard>
@@ -130,6 +122,14 @@ export default function SettingsScreen() {
       </ScrollView>
     </View>
   );
+
+  function handleAbout() {
+    Alert.alert(
+      `${t("about")} ${t("appName")}`,
+      `${t("appName")} ${t("version")} 1.0.0\n\n${t("appDescription")}\n\n${t("madeWithLove")} ❤️`,
+      [{ text: t("confirm") }]
+    );
+  }
 }
 
 const styles = StyleSheet.create({
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: Spacing.lg,
@@ -145,6 +145,10 @@ const styles = StyleSheet.create({
   },
   headerRTL: {
     flexDirection: "row-reverse",
+  },
+  headerTitle: {
+    textAlign: "center",
+    fontSize: 24,
   },
   menuButton: {
     width: 44,
@@ -160,10 +164,14 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
   },
   sectionTitle: {
-    fontWeight: "600",
-    letterSpacing: 1,
-    marginBottom: Spacing.sm,
+    fontWeight: "500",
+    fontSize: 18,
+    lineHeight: 24,
     marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
+    marginLeft: Spacing.lg,
+    marginRight: Spacing.lg,
+    textAlign: "left",
   },
   section: {
     marginBottom: Spacing.md,
@@ -177,22 +185,23 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     marginTop: Spacing.xs,
   },
-  themeRowRTL: {
-    flexDirection: "row-reverse",
-  },
   themeIconContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
-  themeIconContainerRTL: {
-    flexDirection: "row-reverse",
+  themeTextBlock: {
+    justifyContent: "center",
+    alignItems: "flex-start",
+    marginLeft: Spacing.md,
   },
-  themeTextRTL: {
-    marginRight: Spacing.md,
-    marginLeft: 0,
+  themeSubtitle: {
+    color: "#999",
+    marginTop: 6,
+    textAlign: "left",
   },
   themeTitle: {
     fontWeight: "500",
+    textAlign: "left",
   },
   appInfo: {
     alignItems: "center",

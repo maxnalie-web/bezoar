@@ -139,7 +139,7 @@ const translations: Record<string, string> = {
   general: "عمومی",
   about: "درباره",
   version: "نسخه",
-  madeWithLove: "ساخته شد با عشق برای سیروس و اشرفی",
+  madeWithLove: "ساخته شده با عشق برای سیروس و اشرفی",
   dataManagement: "مدیریت داده",
   clearAllData: "پاک کردن همه داده‌ها",
   areYouSure: "آیا مطمئن هستید؟",

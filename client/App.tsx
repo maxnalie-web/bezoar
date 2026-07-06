@@ -1,8 +1,8 @@
+import 'react-native-gesture-handler';
 import React, { useCallback } from "react";
-import { StyleSheet, View } from "react-native";
+import { I18nManager, Platform, StyleSheet, KeyboardAvoidingView, View, ActivityIndicator } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
@@ -16,7 +16,16 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AppStatusBar } from "@/components/AppStatusBar";
 
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
+I18nManager.swapLeftAndRightInRTL?.(true);
+
 SplashScreen.preventAutoHideAsync();
+
+const KeyboardProvider =
+  Platform.OS === "ios"
+    ? require("react-native-keyboard-controller").KeyboardProvider
+    : React.Fragment;
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -32,7 +41,11 @@ export default function App() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
-    return null;
+    return (
+      <View style={[styles.root, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   return (
@@ -41,14 +54,25 @@ export default function App() {
         <LanguageProvider>
           <QueryClientProvider client={queryClient}>
             <SafeAreaProvider>
-              <GestureHandlerRootView style={styles.root} onLayout={onLayoutRootView}>
-                <KeyboardProvider>
-                  <NavigationContainer>
-                    <RootStackNavigator />
-                  </NavigationContainer>
-                  <AppStatusBar />
-                </KeyboardProvider>
-              </GestureHandlerRootView>
+              <NavigationContainer>
+                {Platform.OS === "ios" ? (
+                  <KeyboardAvoidingView style={styles.root} behavior="padding">
+                    <GestureHandlerRootView style={styles.root} onLayout={onLayoutRootView}>
+                      <KeyboardProvider>
+                        <RootStackNavigator />
+                        <AppStatusBar />
+                      </KeyboardProvider>
+                    </GestureHandlerRootView>
+                  </KeyboardAvoidingView>
+                ) : (
+                  <GestureHandlerRootView style={styles.root} onLayout={onLayoutRootView}>
+                    <KeyboardProvider>
+                      <RootStackNavigator />
+                      <AppStatusBar />
+                    </KeyboardProvider>
+                  </GestureHandlerRootView>
+                )}
+              </NavigationContainer>
             </SafeAreaProvider>
           </QueryClientProvider>
         </LanguageProvider>
@@ -58,7 +82,5 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
+  root: { flex: 1 },
 });

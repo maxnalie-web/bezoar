@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Platform } from "react-native";
+import { View, StyleSheet, Platform, I18nManager } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -32,7 +32,7 @@ export function StatCard({ title, value, icon, trend, onPress }: StatCardProps) 
 
   return (
     <GlassCard onPress={onPress} style={styles.card} elevated>
-      <View style={[styles.header, styles.headerRTL]}>
+      <View style={styles.header}>
         <View style={styles.iconWrapper}>
           <LinearGradient
             colors={isDark 
@@ -55,12 +55,12 @@ export function StatCard({ title, value, icon, trend, onPress }: StatCardProps) 
           </View>
         ) : null}
       </View>
-      <ThemedText type="h3" style={[styles.value, styles.valueRTL, { color: theme.text }]}>
+      <ThemedText type="h3" style={[styles.value, I18nManager.isRTL && styles.valueRTL, { color: theme.text }]}>
         {value}
       </ThemedText>
       <ThemedText
         type="small"
-        style={[styles.title, styles.titleRTL, { color: theme.textSecondary }]}
+        style={[styles.title, I18nManager.isRTL && styles.titleRTL, { color: theme.textSecondary }]}
       >
         {title}
       </ThemedText>
@@ -74,13 +74,10 @@ const styles = StyleSheet.create({
     minWidth: 140,
   },
   header: {
-    flexDirection: "row",
+    flexDirection: I18nManager.isRTL ? "row-reverse" : "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: Spacing.md,
-  },
-  headerRTL: {
-    flexDirection: "row-reverse",
   },
   iconWrapper: {
     ...Platform.select({

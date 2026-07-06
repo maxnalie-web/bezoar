@@ -12,12 +12,15 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { getSales, getPatients, getDrugs, deleteSale } from "@/lib/storage";
-import { Sale, Patient, Drug } from "@/types/models";
+import { Sale } from "@/types/models";
 
 type SaleWithDetails = Sale & {
   patientName: string;
   drugName: string;
   drugUnit: string;
+  extraDrugNames?: string;
+  mainTotal: number;
+  auxiliaryTotal: number;
 };
 
 export default function SalesScreen() {
@@ -43,11 +46,27 @@ export default function SalesScreen() {
       const salesWithDetails: SaleWithDetails[] = salesData.map((sale) => {
         const patient = patientsMap.get(sale.patientId);
         const drug = drugsMap.get(sale.drugId);
+
+        const mainTotal = sale.isGift ? 0 : sale.bottleCount * sale.unitPrice;
+
+        const auxiliaryTotal = sale.isGift
+          ? 0
+          : sale.auxiliaryDrugs?.reduce(
+              (sum, d) => sum + d.totalPrice,
+              0
+            ) ?? 0;
+
         return {
           ...sale,
           patientName: patient ? `${patient.firstName} ${patient.lastName}` : "ناشناس",
           drugName: drug ? drug.name : "ناشناس",
           drugUnit: drug ? drug.unit : "واحد",
+          extraDrugNames: sale.auxiliaryDrugs
+            ?.map(d => drugsMap.get(d.drugId)?.name)
+            .filter(Boolean)
+            .join("، "),
+          mainTotal,
+          auxiliaryTotal,
         };
       });
 
@@ -58,6 +77,7 @@ export default function SalesScreen() {
       );
     } catch (error) {
       console.error("Failed to load sales:", error);
+      Alert.alert(t("error"), "خطا در بارگذاری فروش‌ها");
     }
   };
 
@@ -131,6 +151,7 @@ export default function SalesScreen() {
 
   const filteredSales = sales.filter((sale) => {
     if (filter === "all") return true;
+    if (sale.isGift) return false;
     return sale.paymentStatus === filter;
   });
 
@@ -140,17 +161,34 @@ export default function SalesScreen() {
         style={styles.saleCard}
         onPress={() => (navigation as any).navigate("SaleDetail", { saleId: item.id })}
       >
-        <View style={[styles.saleHeader, styles.saleHeaderRTL]}>
+        <View style={styles.saleHeader}>
           <View style={[styles.iconContainer, { backgroundColor: theme.accent + "30" }]}>
             <Feather name="shopping-cart" size={20} color={theme.accent} />
           </View>
-          <View style={[styles.saleInfo, styles.saleInfoRTL]}>
-            <ThemedText type="body" style={[styles.saleName, { textAlign: "right" }]}>
+          <View style={styles.saleInfo}>
+            <ThemedText type="body" numberOfLines={1}>
               {item.patientName}
             </ThemedText>
-            <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+            {item.isGift && (
+              <ThemedText
+                type="caption"
+                style={{ color: theme.warning, marginTop: 2 }}
+              >
+                فروش هدیه
+              </ThemedText>
+            )}
+            <ThemedText type="caption" numberOfLines={1} style={{ color: theme.textSecondary }}>
               {item.drugName} - {item.bottleCount.toLocaleString("fa-IR")} {item.drugUnit}
             </ThemedText>
+            {item.extraDrugNames ? (
+              <ThemedText
+                type="caption"
+                numberOfLines={1}
+                style={{ color: theme.textSecondary, marginTop: 2 }}
+              >
+                داروهای جانبی: {item.extraDrugNames}
+              </ThemedText>
+            ) : null}
           </View>
           <Pressable
             onPress={() => handleDeleteSale(item)}
@@ -160,38 +198,74 @@ export default function SalesScreen() {
             <Feather name="trash-2" size={18} color={theme.error} />
           </Pressable>
         </View>
-        <View style={[styles.saleDetails, styles.saleDetailsRTL]}>
+        <View style={styles.saleDetails}>
           <View style={styles.detailItem}>
-            <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
-              {t("totalPrice")}
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              مبلغ داروی اصلی
             </ThemedText>
-            <ThemedText type="body" style={[styles.detailValue, { color: theme.accent, textAlign: "right" }]}>
+            <ThemedText type="body" style={styles.detailValue}>
+              {formatCurrency(item.mainTotal)}
+            </ThemedText>
+          </View>
+
+          {item.auxiliaryTotal > 0 && (
+            <View style={styles.detailItem}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                مبلغ داروهای جانبی
+              </ThemedText>
+              <ThemedText type="body" style={styles.detailValue}>
+                {formatCurrency(item.auxiliaryTotal)}
+              </ThemedText>
+            </View>
+          )}
+
+          <View style={styles.detailItem}>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              جمع کل
+            </ThemedText>
+            <ThemedText
+              type="body"
+              style={[
+                styles.detailValue,
+                {
+                  color: item.isGift ? theme.textSecondary : theme.accent,
+                },
+              ]}
+            >
               {formatCurrency(item.totalPrice)}
             </ThemedText>
           </View>
           <View style={styles.detailItem}>
-            <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
               {t("purchaseDate")}
             </ThemedText>
-            <ThemedText type="body" style={[styles.detailValue, { textAlign: "right" }]}>
+            <ThemedText type="body" style={styles.detailValue}>
               {formatDate(item.purchaseDate)}
             </ThemedText>
           </View>
           <View style={styles.detailItem}>
-            <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
               {t("status")}
             </ThemedText>
             <View
               style={[
                 styles.statusBadge,
-                { backgroundColor: getStatusColor(item.paymentStatus) + "20", alignSelf: "flex-end" },
+                {
+                  backgroundColor: item.isGift
+                    ? theme.accent + "20"
+                    : getStatusColor(item.paymentStatus) + "20",
+                  alignSelf: "flex-start",
+                },
               ]}
             >
               <ThemedText
-                type="small"
-                style={[styles.statusText, { color: getStatusColor(item.paymentStatus) }]}
+                type="caption"
+                style={[
+                  styles.statusText,
+                  { color: item.isGift ? theme.accent : getStatusColor(item.paymentStatus) },
+                ]}
               >
-                {getStatusLabel(item.paymentStatus)}
+                {item.isGift ? "هدیه" : getStatusLabel(item.paymentStatus)}
               </ThemedText>
             </View>
           </View>
@@ -218,7 +292,7 @@ export default function SalesScreen() {
       ]}
     >
       <ThemedText
-        type="small"
+        type="caption"
         style={[
           styles.filterText,
           { color: filter === value ? theme.accent : theme.textSecondary },
@@ -231,20 +305,22 @@ export default function SalesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, styles.headerRTL, { paddingTop: insets.top + Spacing.md }]}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         <Pressable
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
           style={styles.menuButton}
         >
           <Feather name="menu" size={24} color={theme.text} />
         </Pressable>
-        <ThemedText type="h3">{t("sales")}</ThemedText>
+
+        <ThemedText type="title">{t("sales")}</ThemedText>
+
         <Pressable onPress={handleAddSale} style={styles.menuButton}>
           <Feather name="plus" size={24} color={theme.accent} />
         </Pressable>
       </View>
 
-      <View style={[styles.filterContainer, styles.filterContainerRTL]}>
+      <View style={styles.filterContainer}>
         <FilterButton label={t("all")} value="all" />
         <FilterButton label={t("paid")} value="paid" />
         <FilterButton label={t("unpaid")} value="unpaid" />
@@ -292,9 +368,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
   },
-  headerRTL: {
-    flexDirection: "row-reverse",
-  },
   menuButton: {
     width: 44,
     height: 44,
@@ -306,9 +379,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
     gap: Spacing.sm,
-  },
-  filterContainerRTL: {
-    flexDirection: "row-reverse",
   },
   filterButton: {
     paddingHorizontal: Spacing.md,
@@ -333,9 +403,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Spacing.md,
   },
-  saleHeaderRTL: {
-    flexDirection: "row-reverse",
-  },
   iconContainer: {
     width: 40,
     height: 40,
@@ -345,11 +412,7 @@ const styles = StyleSheet.create({
   },
   saleInfo: {
     flex: 1,
-    marginLeft: Spacing.md,
-  },
-  saleInfoRTL: {
-    marginLeft: 0,
-    marginRight: Spacing.md,
+    marginStart: Spacing.md,
   },
   saleName: {
     fontWeight: "600",
@@ -360,9 +423,6 @@ const styles = StyleSheet.create({
   saleDetails: {
     flexDirection: "row",
     justifyContent: "space-between",
-  },
-  saleDetailsRTL: {
-    flexDirection: "row-reverse",
   },
   detailItem: {
     flex: 1,
