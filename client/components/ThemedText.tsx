@@ -6,14 +6,15 @@ import { Typography } from "@/constants/theme";
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: "h1" | "h2" | "h3" | "h4" | "body" | "small" | "link";
+  type?: "h1" | "h2" | "h3" | "h4" | "title" | "body" | "small" | "caption" | "link";
 };
 
-const getFontFamily = (weight: "400" | "500" | "600" | "700") => {
+const getFontFamily = (weight: "400" | "500" | "600" | "700" | "800") => {
   if (Platform.OS === "web") {
     return "'Vazirmatn', 'Tahoma', sans-serif";
   }
   switch (weight) {
+    case "800":
     case "700":
     case "600":
       return "Vazirmatn-Bold";
@@ -60,10 +61,14 @@ export function ThemedText({
           return Typography.h3;
         case "h4":
           return Typography.h4;
+        case "title":
+          return { ...Typography.h4, fontWeight: "700" as const };
         case "body":
           return Typography.body;
         case "small":
           return Typography.small;
+        case "caption":
+          return { ...Typography.small, fontSize: 12 };
         case "link":
           return Typography.link;
         default:

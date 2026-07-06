@@ -7,36 +7,30 @@ import {
   KeyboardAvoidingView,
   useWindowDimensions,
   Platform,
-  I18nManager,
 } from "react-native";
 import { createDrawerNavigator, DrawerContentComponentProps } from "@react-navigation/drawer";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInRight, FadeIn } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, Elevation } from "@/constants/theme";
 import AppLogo from "@assets/images/logo.png";
 
-import DashboardScreen from "@/screens/DashboardScreen";
+import MainTabNavigator from "@/navigation/MainTabNavigator";
 import SearchScreen from "@/screens/SearchScreen";
-import PatientsScreen from "@/screens/PatientsScreen";
 import DrugsScreen from "@/screens/DrugsScreen";
-import SalesScreen from "@/screens/SalesScreen";
-import ReportsScreen from "@/screens/ReportsScreen";
+import Inventory from "@/screens/InventoryScreen";
 import BackupScreen from "@/screens/BackupScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
 
 export type DrawerParamList = {
-  Dashboard: undefined;
+  MainTabs: undefined;
   Search: undefined;
-  Patients: undefined;
   Drugs: undefined;
-  Sales: undefined;
-  Reports: undefined;
+  Inventory: undefined;
   Backup: undefined;
   Settings: undefined;
 };
@@ -48,12 +42,10 @@ type DrawerItemConfig = {
 };
 
 const drawerItems: DrawerItemConfig[] = [
-  { name: "Dashboard", labelKey: "dashboard", icon: "home" },
+  { name: "MainTabs", labelKey: "dashboard", icon: "home" },
   { name: "Search", labelKey: "search", icon: "search" },
-  { name: "Patients", labelKey: "patients", icon: "users" },
   { name: "Drugs", labelKey: "drugs", icon: "package" },
-  { name: "Sales", labelKey: "sales", icon: "shopping-bag" },
-  { name: "Reports", labelKey: "reports", icon: "bar-chart-2" },
+  { name: "Inventory", labelKey: "inventory", icon: "archive" },
   { name: "Backup", labelKey: "backup", icon: "database" },
   { name: "Settings", labelKey: "settings", icon: "settings" },
 ];
@@ -61,23 +53,23 @@ const drawerItems: DrawerItemConfig[] = [
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
 function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps) {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const currentRoute = state.routes[state.index].name;
 
   return (
     <View style={[styles.drawerContainer, { backgroundColor: theme.backgroundRoot }]}>
-      <View 
+      <View
         style={[
           styles.capsuleContainer,
-          { 
-            backgroundColor: isDark ? theme.capsuleBackground : theme.capsuleBackground,
+          {
+            backgroundColor: theme.capsuleBackground,
             borderColor: theme.capsuleBorder,
             marginTop: insets.top + Spacing.lg,
             marginBottom: insets.bottom + Spacing.lg,
           },
-          Platform.OS === "ios" && Shadows.capsule,
+          Elevation[5],
         ]}
       >
         <KeyboardAvoidingView
@@ -90,73 +82,62 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-          <Animated.View 
-            entering={FadeIn.duration(500)}
-            style={styles.logoContainer}
-          >
-            <Image 
-              source={AppLogo} 
-              style={styles.logoImage}
-              contentFit="contain"
-            />
-            <ThemedText type="h4" style={styles.appName}>
-              {t("appName")}
-            </ThemedText>
-          </Animated.View>
+            <Animated.View
+              entering={FadeIn.duration(500)}
+              style={styles.logoContainer}
+            >
+              <Image
+                source={AppLogo}
+                style={styles.logoImage}
+                contentFit="contain"
+              />
+              <ThemedText type="h4" style={styles.appName}>
+                {t("appName")}
+              </ThemedText>
+            </Animated.View>
 
-          <View style={styles.navSection}>
-            {drawerItems.map((item, index) => {
-              const isActive = currentRoute === item.name;
-              return (
-                <Animated.View
-                  key={item.name}
-                  entering={FadeInRight.delay(index * 50).duration(400)}
-                >
-                  <Pressable
-                    onPress={() => navigation.navigate(item.name)}
-                    style={({ pressed }) => [
-                      styles.drawerItem,
-                      pressed && styles.drawerItemPressed,
-                    ]}
+            <View style={styles.navSection}>
+              {drawerItems.map((item, index) => {
+                const isActive = currentRoute === item.name;
+                return (
+                  <Animated.View
+                    key={item.name}
+                    entering={FadeInRight.delay(index * 50).duration(400)}
                   >
-                    {isActive ? (
-                      <LinearGradient
-                        colors={theme.activeGradient as [string, string]}
-                        start={{ x: 1, y: 0 }}
-                        end={{ x: 0, y: 0 }}
-                        style={[styles.activeBackground, { borderColor: theme.accent + "40" }]}
-                      />
-                    ) : null}
-                    {isActive ? (
-                      <View
-                        style={[
-                          styles.activeIndicator,
-                          { backgroundColor: theme.accent },
-                          Shadows.glow,
-                        ]}
-                      />
-                    ) : null}
-                    <View style={styles.iconContainer}>
-                      <Feather
-                        name={item.icon}
-                        size={20}
-                        color={isActive ? theme.accent : theme.textSecondary}
-                      />
-                    </View>
-                    <ThemedText
-                      style={[
-                        styles.drawerItemLabel,
-                        { color: isActive ? theme.text : (theme.mode === "light" ? theme.text : theme.textSecondary) },
-                        isActive && { fontWeight: "600" },
+                    <Pressable
+                      onPress={() => navigation.navigate(item.name)}
+                      style={({ pressed }) => [
+                        styles.drawerItem,
+                        { backgroundColor: isActive ? theme.accent + "22" : "transparent" },
+                        pressed && styles.drawerItemPressed,
                       ]}
                     >
-                      {t(item.labelKey)}
-                    </ThemedText>
-                  </Pressable>
-                </Animated.View>
-              );
-            })}
-          </View>
+                      {isActive ? (
+                        <View
+                          style={[styles.activeIndicator, { backgroundColor: theme.accentDark }]}
+                        />
+                      ) : null}
+                      <View style={styles.iconContainer}>
+                        <Feather
+                          name={item.icon}
+                          size={20}
+                          color={isActive ? theme.accentDark : theme.textSecondary}
+                        />
+                      </View>
+                      <ThemedText
+                        style={[
+                          styles.drawerItemLabel,
+                          { color: isActive ? theme.text : theme.textSecondary },
+                          isActive && { fontWeight: "700" },
+                        ]}
+                      >
+                        {t(item.labelKey)}
+                      </ThemedText>
+                    </Pressable>
+                  </Animated.View>
+                );
+              })}
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
@@ -165,7 +146,7 @@ function CustomDrawerContent({ state, navigation }: DrawerContentComponentProps)
 }
 
 export default function DrawerNavigator() {
-  const { theme, isDark } = useTheme();
+  const { isDark } = useTheme();
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768;
 
@@ -180,15 +161,13 @@ export default function DrawerNavigator() {
           width: Spacing.sidebarExpandedWidth,
           backgroundColor: "transparent",
         },
-        overlayColor: isDark ? "rgba(0, 0, 0, 0.7)" : "rgba(0, 0, 0, 0.4)",
+        overlayColor: isDark ? "rgba(0, 0, 0, 0.6)" : "rgba(20, 30, 27, 0.35)",
       }}
     >
-      <Drawer.Screen name="Dashboard" component={DashboardScreen} />
+      <Drawer.Screen name="MainTabs" component={MainTabNavigator} />
       <Drawer.Screen name="Search" component={SearchScreen} />
-      <Drawer.Screen name="Patients" component={PatientsScreen} />
       <Drawer.Screen name="Drugs" component={DrugsScreen} />
-      <Drawer.Screen name="Sales" component={SalesScreen} />
-      <Drawer.Screen name="Reports" component={ReportsScreen} />
+      <Drawer.Screen name="Inventory" component={Inventory} />
       <Drawer.Screen name="Backup" component={BackupScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
     </Drawer.Navigator>
@@ -219,13 +198,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
     paddingHorizontal: Spacing.sm,
   },
-  logoIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   logoImage: {
     width: 48,
     height: 48,
@@ -244,15 +216,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     position: "relative",
     overflow: "hidden",
-  },
-  activeBackground: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
   },
   drawerItemPressed: {
     opacity: 0.7,

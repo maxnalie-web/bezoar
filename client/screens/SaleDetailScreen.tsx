@@ -3,6 +3,7 @@ import { View, StyleSheet, Alert, Pressable, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { FormInput } from "@/components/FormInput";
@@ -11,7 +12,7 @@ import { GlassCard } from "@/components/GlassCard";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, AuroraGradient } from "@/constants/theme";
 import {
   getSales,
   getPatients,
@@ -33,7 +34,7 @@ dayjs.extend(jalaliday);
 const SECTION_HEADER_SHIFT_X = -Math.round(Dimensions.get("window").width * 0.03);
 
 export default function SaleDetailScreen() {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -236,8 +237,22 @@ export default function SaleDetailScreen() {
     return amount.toLocaleString("fa-IR") + " " + t("toman");
   };
 
+  const statusAccent = (status: PaymentStatus) => {
+    switch (status) {
+      case "paid":
+        return AuroraGradient.emerald;
+      case "unpaid":
+        return AuroraGradient.rose;
+      case "installment":
+        return AuroraGradient.amber;
+      default:
+        return theme.accent;
+    }
+  };
+
   const PaymentStatusButton = ({ status, label }: { status: PaymentStatus; label: string }) => {
     const isSelected = form.paymentStatus === status;
+    const accent = statusAccent(status);
     return (
       <Pressable
         onPress={() => {
@@ -246,23 +261,42 @@ export default function SaleDetailScreen() {
         }}
         style={[
           styles.statusButton,
-          { borderColor: theme.glassBorder },
+          { borderColor: theme.glassBorder, backgroundColor: theme.backgroundSecondary },
           isSelected && [
             styles.statusButtonActive,
-            { backgroundColor: theme.accent + "20", borderColor: theme.accent },
+            { backgroundColor: accent + "22", borderColor: accent },
           ],
           isGift && { opacity: 0.6 },
         ]}
       >
         <ThemedText
           type="small"
-          style={[styles.statusText, { color: isSelected ? theme.accent : theme.textSecondary }]}
+          style={[styles.statusText, { color: isSelected ? accent : theme.textSecondary }]}
         >
           {label}
         </ThemedText>
       </Pressable>
     );
   };
+
+  const SectionHeader = ({
+    icon,
+    color,
+    label,
+  }: {
+    icon: keyof typeof Feather.glyphMap;
+    color: string;
+    label: string;
+  }) => (
+    <View style={styles.sectionHeader}>
+      <View style={[styles.sectionHeaderIcon, { backgroundColor: color + "22", borderColor: color + "40" }]}>
+        <Feather name={icon} size={16} color={color} />
+      </View>
+      <ThemedText type="small" style={[styles.sectionHeaderText, { color: theme.text }]}>
+        {label}
+      </ThemedText>
+    </View>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
@@ -273,10 +307,11 @@ export default function SaleDetailScreen() {
       >
         {isGift && (
           <GlassCard
+            accentColor={AuroraGradient.violet}
             style={{
               marginBottom: Spacing.lg,
-              backgroundColor: theme.warning + "20",
-              borderColor: theme.warning,
+              backgroundColor: AuroraGradient.violet + "18",
+              borderColor: AuroraGradient.violet,
               borderWidth: 1,
             }}
           >
@@ -288,18 +323,14 @@ export default function SaleDetailScreen() {
                 gap: Spacing.sm,
               }}
             >
-              <Feather name="gift" size={18} color={theme.warning} />
-              <ThemedText style={{ color: theme.warning, fontWeight: "600" }}>
+              <Feather name="gift" size={18} color={AuroraGradient.violet} />
+              <ThemedText style={{ color: AuroraGradient.violet, fontWeight: "700" }}>
                 این فروش به‌صورت هدیه ثبت می‌شود
               </ThemedText>
             </View>
           </GlassCard>
         )}
-        <View style={styles.sectionHeader}>
-          <ThemedText type="small" style={styles.sectionHeaderText}>
-            {t("selectPatient")}
-          </ThemedText>
-        </View>
+        <SectionHeader icon="user" color={theme.accentSecondary} label={t("selectPatient")} />
 
         {showPatientPicker ? (
           <GlassCard style={{ ...styles.pickerCard, marginBottom: Spacing.lg }}>
@@ -312,7 +343,7 @@ export default function SaleDetailScreen() {
                 }}
                 style={[
                   styles.pickerItem,
-                  selectedPatient?.id === patient.id && { backgroundColor: theme.accent + "20" },
+                  selectedPatient?.id === patient.id && { backgroundColor: theme.accentSecondary + "20" },
                 ]}
               >
                 <ThemedText style={styles.centerText}>{`${patient.firstName} ${patient.lastName}`}</ThemedText>
@@ -328,9 +359,11 @@ export default function SaleDetailScreen() {
             ) : null}
           </GlassCard>
         ) : (
-          <GlassCard onPress={() => setShowPatientPicker(true)} style={{ ...styles.selectorCard, marginBottom: Spacing.lg }}>
+          <GlassCard accentColor={theme.accentSecondary} onPress={() => setShowPatientPicker(true)} style={{ ...styles.selectorCard, marginBottom: Spacing.lg }}>
             <View style={[styles.selectorContent, styles.selectorContentRTL]}>
-              <Feather name="user" size={20} color={theme.accent} />
+              <View style={[styles.selectorIconWrap, { backgroundColor: theme.accentSecondary + "22" }]}>
+                <Feather name="user" size={18} color={theme.accentSecondary} />
+              </View>
               <View style={[styles.selectorText, styles.selectorTextRTL]}>
                 <ThemedText type="body" style={styles.centerText}>
                   {selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "انتخاب بیمار"}
@@ -346,18 +379,16 @@ export default function SaleDetailScreen() {
           </GlassCard>
         )}
 
-        <View style={styles.sectionHeader}>
-          <ThemedText type="small" style={styles.sectionHeaderText}>
-            {t("selectDrug")}
-          </ThemedText>
-        </View>
+        <SectionHeader icon="package" color={theme.accent} label={t("selectDrug")} />
 
         {/* Primary drug (fixed) */}
-        <GlassCard style={{ ...styles.selectorCard, marginBottom: Spacing.lg }}>
+        <GlassCard accentColor={theme.accent} style={{ ...styles.selectorCard, marginBottom: Spacing.lg }}>
           <View style={[styles.selectorContent, styles.selectorContentRTL]}>
-            <Feather name="package" size={20} color={theme.accent} />
+            <View style={[styles.selectorIconWrap, { backgroundColor: theme.accent + "22" }]}>
+              <Feather name="package" size={18} color={theme.accent} />
+            </View>
             <View style={[styles.selectorText, styles.selectorTextRTL]}>
-              <ThemedText type="body" style={[styles.centerText, { fontSize: 18, fontWeight: "600" }]}>
+              <ThemedText type="body" style={[styles.centerText, { fontSize: 18, fontWeight: "700" }]}>
                 {selectedDrug?.name || "Bezoar"}
               </ThemedText>
               {selectedDrug ? (
@@ -373,11 +404,7 @@ export default function SaleDetailScreen() {
         </GlassCard>
 
         {/* Extra (side) drugs */}
-        <View style={styles.sectionHeader}>
-          <ThemedText type="small" style={styles.sectionHeaderText}>
-            داروهای جانبی
-          </ThemedText>
-        </View>
+        <SectionHeader icon="plus-circle" color={theme.accentTertiary} label="داروهای جانبی" />
 
         {showExtraDrugPicker ? (
           <GlassCard style={{ ...styles.pickerCard, marginBottom: Spacing.lg }}>
@@ -391,7 +418,7 @@ export default function SaleDetailScreen() {
                       selected ? prev.filter((id) => id !== drug.id) : [...prev, drug.id]
                     );
                   }}
-                  style={[styles.pickerItem, selected && { backgroundColor: theme.accent + "20" }]}
+                  style={[styles.pickerItem, selected && { backgroundColor: theme.accentTertiary + "20" }]}
                 >
                   <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between" }}>
                     <View style={{ flex: 1 }}>
@@ -406,8 +433,8 @@ export default function SaleDetailScreen() {
                         height: 22,
                         borderRadius: 6,
                         borderWidth: 2,
-                        borderColor: selected ? theme.accent : theme.textSecondary,
-                        backgroundColor: selected ? theme.accent : "transparent",
+                        borderColor: selected ? theme.accentTertiary : theme.textSecondary,
+                        backgroundColor: selected ? theme.accentTertiary : "transparent",
                         alignItems: "center",
                         justifyContent: "center",
                         marginLeft: Spacing.md,
@@ -431,9 +458,11 @@ export default function SaleDetailScreen() {
             </Button>
           </GlassCard>
         ) : (
-          <GlassCard onPress={() => setShowExtraDrugPicker(true)} style={{ ...styles.selectorCard, marginBottom: Spacing.lg }}>
+          <GlassCard accentColor={theme.accentTertiary} onPress={() => setShowExtraDrugPicker(true)} style={{ ...styles.selectorCard, marginBottom: Spacing.lg }}>
             <View style={[styles.selectorContent, styles.selectorContentRTL]}>
-              <Feather name="plus-circle" size={20} color={theme.accent} />
+              <View style={[styles.selectorIconWrap, { backgroundColor: theme.accentTertiary + "22" }]}>
+                <Feather name="plus-circle" size={18} color={theme.accentTertiary} />
+              </View>
               <View style={[styles.selectorText, styles.selectorTextRTL]}>
                 <ThemedText type="body" style={styles.centerText}>
                   {selectedExtraDrugIds.length ? `تعداد انتخاب‌شده: ${selectedExtraDrugIds.length}` : "انتخاب داروهای جانبی"}
@@ -453,7 +482,7 @@ export default function SaleDetailScreen() {
         )}
 
         {/* Gift toggle */}
-        <GlassCard style={{ marginBottom: Spacing.lg }}>
+        <GlassCard accentColor={AuroraGradient.violet} style={{ marginBottom: Spacing.lg }}>
           <View
             style={{
               flexDirection: "row-reverse",
@@ -461,7 +490,17 @@ export default function SaleDetailScreen() {
               alignItems: "center",
             }}
           >
-            <ThemedText>این فروش هدیه است</ThemedText>
+            <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: Spacing.sm }}>
+              <View
+                style={[
+                  styles.giftIconWrap,
+                  { backgroundColor: AuroraGradient.violet + (isGift ? "30" : "18") },
+                ]}
+              >
+                <Feather name="gift" size={16} color={AuroraGradient.violet} />
+              </View>
+              <ThemedText style={{ fontWeight: "600" }}>این فروش هدیه است</ThemedText>
+            </View>
 
             <Pressable
               onPress={() => {
@@ -486,33 +525,25 @@ export default function SaleDetailScreen() {
                   return next;
                 });
               }}
-              style={{
-                width: 44,
-                height: 24,
-                borderRadius: 12,
-                backgroundColor: isGift ? theme.accent : theme.glassBorder,
-                justifyContent: "center",
-                paddingHorizontal: 4,
-              }}
+              style={[
+                styles.giftSwitchTrack,
+                { backgroundColor: isGift ? AuroraGradient.violet : theme.glassBorder },
+              ]}
             >
               <View
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: 8,
-                  backgroundColor: "#fff",
-                  alignSelf: isGift ? "flex-start" : "flex-end",
-                }}
+                style={[
+                  styles.giftSwitchThumb,
+                  {
+                    alignSelf: isGift ? "flex-start" : "flex-end",
+                    shadowColor: AuroraGradient.violet,
+                  },
+                ]}
               />
             </Pressable>
           </View>
         </GlassCard>
 
-        <View style={styles.sectionHeader}>
-          <ThemedText type="small" style={styles.sectionHeaderText}>
-            جزئیات خرید
-          </ThemedText>
-        </View>
+        <SectionHeader icon="shopping-bag" color={theme.info} label="جزئیات خرید" />
 
         <FormInput
           label={t("bottleCount")}
@@ -532,28 +563,46 @@ export default function SaleDetailScreen() {
           editable={!isGift}
         />
 
-        <GlassCard style={{ ...styles.totalCard, ...styles.centerBoxContent, marginBottom: Spacing.lg }}>
-          <ThemedText type="small" style={[{ color: theme.textSecondary, fontSize: 15 }, styles.centerText]}>
-            جمع داروی اصلی
-          </ThemedText>
-          <ThemedText type="body" style={[{ color: theme.text, fontSize: 18, fontWeight: "600" }, styles.centerText]}>
-            {formatCurrency(calculateMainTotal())}
-          </ThemedText>
+        <View style={[styles.totalCardOuter, { marginBottom: Spacing.lg }]}>
+          <LinearGradient
+            colors={[
+              theme.accentSecondary + (isDark ? "26" : "1a"),
+              theme.accent + (isDark ? "20" : "14"),
+              theme.accentTertiary + (isDark ? "26" : "1a"),
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={[styles.totalCard, styles.centerBoxContent, { borderColor: theme.glassBorder }]}>
+            <View style={[styles.totalIconWrap, { backgroundColor: theme.accent + "22" }]}>
+              <Feather name="bar-chart-2" size={18} color={theme.accent} />
+            </View>
 
-          <ThemedText type="small" style={[{ color: theme.textSecondary, marginTop: 8, fontSize: 15 }, styles.centerText]}>
-            جمع داروهای جانبی
-          </ThemedText>
-          <ThemedText type="body" style={[{ color: theme.text, fontSize: 18, fontWeight: "600" }, styles.centerText]}>
-            {formatCurrency(calculateAuxiliaryTotal())}
-          </ThemedText>
+            <ThemedText type="small" style={[{ color: theme.textSecondary, fontSize: 15, marginTop: Spacing.sm }, styles.centerText]}>
+              جمع داروی اصلی
+            </ThemedText>
+            <ThemedText type="body" style={[{ color: theme.text, fontSize: 18, fontWeight: "700" }, styles.centerText]}>
+              {formatCurrency(calculateMainTotal())}
+            </ThemedText>
 
-          <ThemedText type="small" style={[{ color: theme.textSecondary, marginTop: 12, fontSize: 15 }, styles.centerText]}>
-            مبلغ کل
-          </ThemedText>
-          <ThemedText type="h3" style={[{ color: isGift ? theme.textSecondary : theme.accent, fontSize: 22, fontWeight: "700" }, styles.centerText]}>
-            {formatCurrency(calculateGrandTotal())}
-          </ThemedText>
-        </GlassCard>
+            <ThemedText type="small" style={[{ color: theme.textSecondary, marginTop: 8, fontSize: 15 }, styles.centerText]}>
+              جمع داروهای جانبی
+            </ThemedText>
+            <ThemedText type="body" style={[{ color: theme.text, fontSize: 18, fontWeight: "700" }, styles.centerText]}>
+              {formatCurrency(calculateAuxiliaryTotal())}
+            </ThemedText>
+
+            <View style={[styles.totalDivider, { backgroundColor: theme.glassBorder }]} />
+
+            <ThemedText type="small" style={[{ color: theme.textSecondary, fontSize: 15 }, styles.centerText]}>
+              مبلغ کل
+            </ThemedText>
+            <ThemedText type="h3" style={[{ color: isGift ? theme.textSecondary : theme.accentTertiary, fontSize: 24, fontWeight: "800" }, styles.centerText]}>
+              {formatCurrency(calculateGrandTotal())}
+            </ThemedText>
+          </View>
+        </View>
 
         <FormInput
           label={t("purchaseDate")}
@@ -570,11 +619,7 @@ export default function SaleDetailScreen() {
           rtl={true}
         />
 
-        <View style={styles.sectionHeader}>
-          <ThemedText type="small" style={styles.sectionHeaderText}>
-            {t("paymentStatus")}
-          </ThemedText>
-        </View>
+        <SectionHeader icon="credit-card" color={theme.accentTertiary} label={t("paymentStatus")} />
 
         <View style={[styles.statusContainer, styles.statusContainerRTL]}>
           <PaymentStatusButton status="paid" label={t("paid")} />
@@ -605,13 +650,9 @@ export default function SaleDetailScreen() {
 
         {saleId && installments.length > 0 ? (
           <View style={styles.installmentsListSection}>
-            <View style={styles.sectionHeader}>
-              <ThemedText type="small" style={styles.sectionHeaderText}>
-                {t("installmentsStatus")}
-              </ThemedText>
-            </View>
+            <SectionHeader icon="list" color={AuroraGradient.amber} label={t("installmentsStatus")} />
 
-            <GlassCard style={{ ...styles.installmentsSummary, marginBottom: Spacing.lg }}>
+            <GlassCard accentColor={AuroraGradient.amber} style={{ ...styles.installmentsSummary, marginBottom: Spacing.lg }}>
               <View style={styles.summaryRow}>
                 <ThemedText type="small" style={[{ color: theme.textSecondary }, styles.centerText]}>
                   {t("paidCount")}: {installments.filter((i) => i.status === "paid").length} / {installments.length}
@@ -709,6 +750,13 @@ const styles = StyleSheet.create({
   selectorContentRTL: {
     flexDirection: "row-reverse",
   },
+  selectorIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   selectorText: {
     flex: 1,
     marginLeft: Spacing.md,
@@ -725,9 +773,51 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
     marginBottom: Spacing.xs,
   },
+  giftIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: BorderRadius.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  giftSwitchTrack: {
+    width: 46,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  giftSwitchThumb: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#fff",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  totalCardOuter: {
+    borderRadius: BorderRadius.xl,
+    overflow: "hidden",
+  },
   totalCard: {
     alignItems: "flex-start",
-    marginBottom: Spacing.lg,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+  },
+  totalIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  totalDivider: {
+    height: 1,
+    alignSelf: "stretch",
+    marginVertical: Spacing.md,
   },
   statusContainer: {
     flexDirection: "row",
@@ -791,14 +881,25 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xl,
   },
   sectionHeader: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: Spacing.sm,
     marginTop: Spacing["3xl"],
-    marginBottom: Spacing["3xl"],
+    marginBottom: Spacing.lg,
     alignSelf: "flex-start",
     transform: [{ translateX: SECTION_HEADER_SHIFT_X }],
   },
+  sectionHeaderIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   sectionHeaderText: {
     fontWeight: "700",
-    fontSize: 20,
+    fontSize: 18,
     textAlign: "left",
   },
   centerBoxContent: {

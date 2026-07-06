@@ -6,17 +6,18 @@ import { useNavigation, DrawerActions } from "@react-navigation/native";
 import * as DocumentPicker from "expo-document-picker";
 import * as Sharing from "expo-sharing";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { GlassCard } from "@/components/GlassCard";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, AuroraGradient } from "@/constants/theme";
 import { getAllData, restoreData, RestoreResult } from "@/lib/storage";
 
 export default function BackupScreen() {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -30,7 +31,7 @@ export default function BackupScreen() {
       const fileName = `bezoar-backup-${new Date().toISOString().split("T")[0]}.json`;
 
       if (Platform.OS !== "web") {
-        const FileSystem = await import("expo-file-system");
+        const FileSystem = await import("expo-file-system/legacy");
         const fileUri = FileSystem.documentDirectory + fileName;
 
         await FileSystem.writeAsStringAsync(fileUri, backup, {
@@ -76,11 +77,11 @@ export default function BackupScreen() {
       }
 
       const fileUri = result.assets[0].uri;
-      
+
       let content: string;
 
       if (Platform.OS !== "web") {
-        const FileSystem = await import("expo-file-system");
+        const FileSystem = await import("expo-file-system/legacy");
         content = await FileSystem.readAsStringAsync(fileUri, {
           encoding: FileSystem.EncodingType.UTF8,
         });
@@ -151,11 +152,16 @@ export default function BackupScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-          <GlassCard style={styles.section}>
+          <GlassCard style={styles.section} accentColor={AuroraGradient.teal} elevated>
             <View style={[styles.sectionHeader, styles.sectionHeaderRTL]}>
-              <View style={[styles.iconContainer, { backgroundColor: theme.accent + "20" }]}>
-                <Feather name="upload-cloud" size={24} color={theme.accent} />
-              </View>
+              <LinearGradient
+                colors={[AuroraGradient.teal + (isDark ? "40" : "26"), AuroraGradient.tealLight + (isDark ? "20" : "12")]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.iconContainer}
+              >
+                <Feather name="upload-cloud" size={24} color={AuroraGradient.teal} />
+              </LinearGradient>
               <View style={[styles.sectionInfo, styles.sectionInfoRTL]}>
                 <ThemedText type="h4" style={{ textAlign: "left" }}>
                   {t("createBackup")}
@@ -177,11 +183,16 @@ export default function BackupScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).duration(400)}>
-          <GlassCard style={styles.section}>
+          <GlassCard style={styles.section} accentColor={AuroraGradient.violet} elevated>
             <View style={[styles.sectionHeader, styles.sectionHeaderRTL]}>
-              <View style={[styles.iconContainer, { backgroundColor: theme.success + "20" }]}>
-                <Feather name="download-cloud" size={24} color={theme.success} />
-              </View>
+              <LinearGradient
+                colors={[AuroraGradient.violet + (isDark ? "40" : "26"), AuroraGradient.violetLight + (isDark ? "20" : "12")]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.iconContainer}
+              >
+                <Feather name="download-cloud" size={24} color={AuroraGradient.violet} />
+              </LinearGradient>
               <View style={[styles.sectionInfo, styles.sectionInfoRTL]}>
                 <ThemedText type="h4" style={{ textAlign: "left" }}>
                   {t("restoreBackup")}
@@ -203,9 +214,16 @@ export default function BackupScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(300).duration(400)}>
-          <GlassCard>
+          <GlassCard accentColor={AuroraGradient.amber}>
             <View style={styles.infoRow}>
-              <Feather name="info" size={20} color={theme.textSecondary} />
+              <View
+                style={[
+                  styles.infoIconBadge,
+                  { backgroundColor: AuroraGradient.amber + (isDark ? "26" : "18") },
+                ]}
+              >
+                <Feather name="info" size={16} color={AuroraGradient.amber} />
+              </View>
               <ThemedText type="small" style={[styles.infoText, { color: theme.textSecondary }]}>
                 {t("backupInfo")}
               </ThemedText>
@@ -277,6 +295,13 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: "row",
     alignItems: "flex-start",
+  },
+  infoIconBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: BorderRadius.sm,
+    alignItems: "center",
+    justifyContent: "center",
   },
   infoText: {
     flex: 1,

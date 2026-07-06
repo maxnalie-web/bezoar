@@ -1,63 +1,101 @@
 import { Platform } from "react-native";
 
-const neonPurple = "#A855F7";
-const neonPurpleLight = "#C084FC";
-const neonPurpleDark = "#7C3AED";
-const neonPurpleGlow = "#D8B4FE";
+// ─────────────────────────────────────────────────────────────
+// MINT — a light, soft, pastel design system built to match a
+// reference product style-guide: seafoam-mint primary, pure white
+// surfaces, pill-shaped buttons/chips/tabs, a glowing teal focus
+// ring, and a 5-level soft-shadow elevation scale.
+// ─────────────────────────────────────────────────────────────
+
+const mint = {
+  primary: "#7BDDC4",
+  primaryDark: "#4FC7A8",
+  primaryLight: "#B7EFE0",
+  surface: "#FFFFFE",
+  border: "#E6E9F0",
+  focusRing: "#00CFCC",
+  success: "#6FDCB3",
+  warning: "#F5D98B",
+  warningStrong: "#E0AA3E",
+  error: "#F3A9A9",
+  errorStrong: "#E06A6A",
+};
 
 export const Colors = {
   light: {
-    text: "#11181C",
-    textSecondary: "#687076",
-    buttonText: "#FFFFFF",
-    tabIconDefault: "#687076",
-    tabIconSelected: neonPurple,
-    link: neonPurple,
-    accent: neonPurple,
-    accentLight: neonPurpleLight,
-    accentDark: neonPurpleDark,
-    accentGlow: neonPurpleGlow,
-    backgroundRoot: "#F8F9FA",
-    backgroundDefault: "#FFFFFF",
-    backgroundSecondary: "#F0F0F3",
-    backgroundTertiary: "#E5E5E8",
-    glass: "rgba(255, 255, 255, 0.85)",
-    glassBorder: "rgba(168, 85, 247, 0.15)",
-    success: "#10B981",
-    warning: "#F59E0B",
-    error: "#EF4444",
-    cardShadow: "rgba(0, 0, 0, 0.08)",
-    gradient: ["#F8F9FA", "#EDE9FE"],
-    capsuleBackground: "rgba(255, 255, 255, 0.95)",
-    capsuleBorder: "rgba(168, 85, 247, 0.2)",
-    activeGradient: ["rgba(168, 85, 247, 0.15)", "rgba(168, 85, 247, 0.05)"],
+    text: "#20262E",
+    textSecondary: "#7A8290",
+    buttonText: "#16362E",
+    tabIconDefault: "#A6ADBB",
+    tabIconSelected: mint.primaryDark,
+    link: mint.primaryDark,
+    accent: mint.primary,
+    accentLight: mint.primaryLight,
+    accentDark: mint.primaryDark,
+    accentGlow: mint.focusRing,
+    accentSecondary: mint.focusRing,
+    accentTertiary: mint.primaryDark,
+    backgroundRoot: "#F6FBFA",
+    backgroundDefault: mint.surface,
+    backgroundSecondary: "#F0F4F3",
+    backgroundTertiary: "#E9EEEC",
+    glass: "rgba(255, 255, 255, 0.96)",
+    glassBorder: mint.border,
+    success: mint.success,
+    warning: mint.warningStrong,
+    error: mint.errorStrong,
+    info: mint.focusRing,
+    cardShadow: "rgba(40, 60, 55, 0.10)",
+    gradient: ["#F6FBFA", "#EAF7F3"],
+    gradientAurora: [mint.primary, mint.focusRing, mint.primaryDark],
+    capsuleBackground: "#FFFFFE",
+    capsuleBorder: mint.border,
+    activeGradient: ["rgba(123, 221, 196, 0.28)", "rgba(0, 207, 204, 0.10)"],
   },
   dark: {
-    text: "#FFFFFF",
-    textSecondary: "#8B8B9A",
-    buttonText: "#FFFFFF",
-    tabIconDefault: "#6B6B7A",
-    tabIconSelected: neonPurple,
-    link: neonPurpleLight,
-    accent: neonPurple,
-    accentLight: neonPurpleLight,
-    accentDark: neonPurpleDark,
-    accentGlow: neonPurpleGlow,
-    backgroundRoot: "#000000",
-    backgroundDefault: "#0D0D12",
-    backgroundSecondary: "#141419",
-    backgroundTertiary: "#1A1A22",
-    glass: "rgba(13, 13, 18, 0.95)",
-    glassBorder: "rgba(168, 85, 247, 0.25)",
-    success: "#10B981",
-    warning: "#F59E0B",
-    error: "#EF4444",
-    cardShadow: "rgba(168, 85, 247, 0.08)",
-    gradient: ["#000000", "#0D0D12"],
-    capsuleBackground: "#141419",
-    capsuleBorder: "rgba(255, 255, 255, 0.08)",
-    activeGradient: ["rgba(168, 85, 247, 0.25)", "rgba(168, 85, 247, 0.08)"],
+    text: "#EAF6F2",
+    textSecondary: "#8FA39C",
+    buttonText: "#16362E",
+    tabIconDefault: "#5C6B66",
+    tabIconSelected: mint.primary,
+    link: mint.primary,
+    accent: mint.primary,
+    accentLight: mint.primaryLight,
+    accentDark: mint.primaryDark,
+    accentGlow: mint.focusRing,
+    accentSecondary: mint.focusRing,
+    accentTertiary: mint.primaryDark,
+    backgroundRoot: "#0E1613",
+    backgroundDefault: "#141F1B",
+    backgroundSecondary: "#192723",
+    backgroundTertiary: "#20302A",
+    glass: "rgba(20, 31, 27, 0.94)",
+    glassBorder: "rgba(123, 221, 196, 0.22)",
+    success: mint.success,
+    warning: mint.warningStrong,
+    error: mint.errorStrong,
+    info: mint.focusRing,
+    cardShadow: "rgba(0, 207, 204, 0.10)",
+    gradient: ["#0E1613", "#141F1B"],
+    gradientAurora: [mint.primary, mint.focusRing, mint.primaryDark],
+    capsuleBackground: "#141F1B",
+    capsuleBorder: "rgba(123, 221, 196, 0.18)",
+    activeGradient: ["rgba(123, 221, 196, 0.22)", "rgba(0, 207, 204, 0.10)"],
   },
+};
+
+export const Mint = mint;
+export const AuroraGradient = {
+  teal: mint.focusRing,
+  tealLight: "#5CE8E5",
+  violet: mint.primaryDark,
+  violetLight: mint.primaryLight,
+  magenta: mint.primaryDark,
+  magentaLight: mint.primary,
+  amber: mint.warningStrong,
+  emerald: mint.success,
+  rose: mint.errorStrong,
+  sky: mint.focusRing,
 };
 
 export const Spacing = {
@@ -82,50 +120,50 @@ export const BorderRadius = {
   md: 18,
   lg: 24,
   xl: 30,
-  "2xl": 40,
-  "3xl": 50,
+  "2xl": 36,
+  "3xl": 48,
   capsule: 60,
   full: 9999,
 };
 
 export const Typography = {
   h1: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: "700" as const,
-    letterSpacing: 0,
-    lineHeight: 44,
+    letterSpacing: -0.3,
+    lineHeight: 42,
   },
   h2: {
-    fontSize: 26,
+    fontSize: 25,
     fontWeight: "700" as const,
-    letterSpacing: 0,
-    lineHeight: 36,
+    letterSpacing: -0.2,
+    lineHeight: 34,
   },
   h3: {
-    fontSize: 22,
+    fontSize: 21,
     fontWeight: "600" as const,
     letterSpacing: 0,
-    lineHeight: 32,
+    lineHeight: 30,
   },
   h4: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "600" as const,
     letterSpacing: 0,
-    lineHeight: 28,
+    lineHeight: 26,
   },
   body: {
     fontSize: 15,
     fontWeight: "400" as const,
-    lineHeight: 26,
+    lineHeight: 25,
   },
   small: {
     fontSize: 13,
     fontWeight: "400" as const,
-    lineHeight: 22,
+    lineHeight: 21,
   },
   link: {
     fontSize: 15,
-    fontWeight: "500" as const,
+    fontWeight: "600" as const,
     lineHeight: 24,
   },
 };
@@ -154,45 +192,31 @@ export const Fonts = Platform.select({
 });
 
 export const GlassStyles = {
-  blur: 25,
-  opacity: 0.85,
+  blur: 20,
+  opacity: 0.96,
   borderWidth: 1,
 };
 
+// A five-level soft-shadow elevation scale, matching the reference
+// style-guide's "Level 1..5" stacked-card elevation demo.
+export const Elevation = {
+  1: { shadowColor: "#1F2924", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1 },
+  2: { shadowColor: "#1F2924", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
+  3: { shadowColor: "#1F2924", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 4 },
+  4: { shadowColor: "#1F2924", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.10, shadowRadius: 16, elevation: 6 },
+  5: { shadowColor: "#1F2924", shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.14, shadowRadius: 24, elevation: 10 },
+};
+
 export const Shadows = {
-  sm: {
-    shadowColor: "#A855F7",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  md: {
-    shadowColor: "#A855F7",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  lg: {
-    shadowColor: "#A855F7",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
-  },
+  sm: Elevation[1],
+  md: Elevation[3],
+  lg: Elevation[4],
   glow: {
-    shadowColor: "#A855F7",
+    shadowColor: mint.focusRing,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
+    elevation: 6,
   },
-  capsule: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 24,
-    elevation: 12,
-  },
+  capsule: Elevation[5],
 };

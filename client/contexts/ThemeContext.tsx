@@ -17,7 +17,7 @@ const THEME_STORAGE_KEY = "@bezoar_theme";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const deviceColorScheme = useDeviceColorScheme();
-  const [colorScheme, setColorSchemeState] = useState<ColorScheme>("dark");
+  const [colorScheme, setColorSchemeState] = useState<ColorScheme>("light");
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {

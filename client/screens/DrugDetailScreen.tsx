@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { FormInput } from "@/components/FormInput";
@@ -9,7 +10,7 @@ import { Button } from "@/components/Button";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Spacing } from "@/constants/theme";
+import { Spacing, BorderRadius, AuroraGradient } from "@/constants/theme";
 import { getDrugs, saveDrug, updateDrug } from "@/lib/storage";
 
 export default function DrugDetailScreen() {
@@ -29,6 +30,8 @@ export default function DrugDetailScreen() {
     salePrice: "",
     unit: "بطری",
     description: "",
+    stockQuantity: "0",
+    lowStockThreshold: "0",
   });
 
   useEffect(() => {
@@ -56,6 +59,8 @@ export default function DrugDetailScreen() {
         salePrice: drug.salePrice.toString(),
         unit: drug.unit,
         description: drug.description,
+        stockQuantity: (drug.stockQuantity ?? 0).toString(),
+        lowStockThreshold: (drug.lowStockThreshold ?? 0).toString(),
       });
     }
   };
@@ -81,6 +86,8 @@ export default function DrugDetailScreen() {
         salePrice: saleP,
         unit: form.unit,
         description: form.description,
+        stockQuantity: parseInt(form.stockQuantity, 10) || 0,
+        lowStockThreshold: parseInt(form.lowStockThreshold, 10) || 0,
       };
 
       if (drugId) {
@@ -100,6 +107,33 @@ export default function DrugDetailScreen() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const SectionHeader = ({
+    title,
+    icon,
+    color,
+  }: {
+    title: string;
+    icon: keyof typeof Feather.glyphMap;
+    color: string;
+  }) => (
+    <View style={styles.sectionHeaderRow}>
+      <View
+        style={[
+          styles.sectionIconBadge,
+          { backgroundColor: color + "22", borderColor: color + "45" },
+        ]}
+      >
+        <Feather name={icon} size={16} color={color} />
+      </View>
+      <ThemedText
+        type="h4"
+        style={[styles.sectionTitle, { color: theme.text }]}
+      >
+        {title}
+      </ThemedText>
+    </View>
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <KeyboardAwareScrollViewCompat
@@ -110,12 +144,11 @@ export default function DrugDetailScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <ThemedText
-          type="title"
-          style={[styles.sectionTitle, { color: theme.textPrimary }]}
-        >
-          اطلاعات دارو
-        </ThemedText>
+        <SectionHeader
+          title="اطلاعات دارو"
+          icon="info"
+          color={AuroraGradient.violet}
+        />
 
         <FormInput
           label={t("drugName")}
@@ -139,12 +172,11 @@ export default function DrugDetailScreen() {
           rtl={false}
         />
 
-        <ThemedText
-          type="title"
-          style={[styles.sectionTitle, { color: theme.textPrimary }]}
-        >
-          قیمت‌گذاری
-        </ThemedText>
+        <SectionHeader
+          title="قیمت‌گذاری"
+          icon="dollar-sign"
+          color={AuroraGradient.teal}
+        />
 
         <FormInput
           label={`${t("purchasePrice")} (${t("toman")})`}
@@ -170,12 +202,32 @@ export default function DrugDetailScreen() {
           rtl={false}
         />
 
-        <ThemedText
-          type="title"
-          style={[styles.sectionTitle, { color: theme.textPrimary }]}
-        >
-          اطلاعات تکمیلی
-        </ThemedText>
+        <SectionHeader
+          title={t("stockManagement")}
+          icon="box"
+          color={AuroraGradient.amber}
+        />
+
+        <FormInput
+          label={t("currentStock")}
+          value={form.stockQuantity}
+          onChangeText={(value) => updateField("stockQuantity", value)}
+          keyboardType="numeric"
+          rtl={false}
+        />
+        <FormInput
+          label={t("lowStockThreshold")}
+          value={form.lowStockThreshold}
+          onChangeText={(value) => updateField("lowStockThreshold", value)}
+          keyboardType="numeric"
+          rtl={false}
+        />
+
+        <SectionHeader
+          title="اطلاعات تکمیلی"
+          icon="file-text"
+          color={AuroraGradient.magenta}
+        />
 
         <FormInput
           label="توضیحات"
@@ -205,10 +257,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
   },
-  sectionTitle: {
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
     marginBottom: Spacing.md,
     marginTop: Spacing.lg,
-    alignSelf: "flex-start",
+    alignSelf: "stretch",
+  },
+  sectionIconBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sectionTitle: {
+    fontWeight: "700",
   },
   saveButton: {
     marginTop: Spacing.xl,

@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useState } from "react";
 import {
   View,
   TextInput,
@@ -36,11 +36,14 @@ export const FormInput = forwardRef<any, FormInputProps>(
       containerStyle,
       rtl = true,
       placeholderTextColor,
+      onFocus,
+      onBlur,
       ...props
     },
     ref
   ) => {
     const { theme } = useTheme();
+    const [focused, setFocused] = useState(false);
 
     return (
       <View style={styles.container}>
@@ -50,12 +53,11 @@ export const FormInput = forwardRef<any, FormInputProps>(
             style={[
               styles.label,
               {
-                color: theme.textSecondary,
+                color: focused ? theme.accentDark : theme.textSecondary,
                 backgroundColor: theme.backgroundRoot,
               },
               typeof label === "string" &&
                 (label === "اطلاعات پزشکی" || label === "اطلاعات هویتی") && {
-                  // move those section labels up — use an existing spacing key
                   top: -Spacing["5xl"],
                   marginBottom: Spacing.lg,
                   fontSize: 22,
@@ -73,7 +75,13 @@ export const FormInput = forwardRef<any, FormInputProps>(
             rtl && styles.inputContainerRTL,
             {
               backgroundColor: theme.backgroundSecondary,
-              borderColor: error ? theme.error : theme.glassBorder,
+              borderColor: error ? theme.error : focused ? theme.accentGlow : theme.glassBorder,
+              borderWidth: focused ? 1.5 : 1,
+              shadowColor: theme.accentGlow,
+              shadowOpacity: focused ? 0.35 : 0,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 0 },
+              elevation: focused ? 3 : 0,
             },
             containerStyle,
           ]}
@@ -89,10 +97,18 @@ export const FormInput = forwardRef<any, FormInputProps>(
             placeholderTextColor={placeholderTextColor ?? theme.textSecondary}
             placeholder={props.placeholder}
             editable={props.editable ?? true}
-            selectionColor={theme.accent}
+            selectionColor={theme.accentDark}
             allowFontScaling={true}
             textAlignVertical="center"
             underlineColorAndroid="transparent"
+            onFocus={(e) => {
+              setFocused(true);
+              onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setFocused(false);
+              onBlur?.(e);
+            }}
             {...props}
           />
           {icon ? (
@@ -101,7 +117,7 @@ export const FormInput = forwardRef<any, FormInputProps>(
               style={[styles.iconContainer, rtl && styles.iconContainerRTL]}
               hitSlop={12}
             >
-              <Feather name={icon} size={20} color={theme.textSecondary} />
+              <Feather name={icon} size={20} color={focused ? theme.accentDark : theme.textSecondary} />
             </Pressable>
           ) : null}
         </View>
@@ -140,9 +156,9 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.full,
     borderWidth: 1,
-    minHeight: 44,
+    minHeight: 48,
     marginTop: Spacing.xs,
   },
   inputContainerRTL: {
@@ -150,7 +166,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     fontSize: 16,
     includeFontPadding: false,

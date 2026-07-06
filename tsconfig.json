@@ -5,7 +5,6 @@
     "esModuleInterop": true,
     "paths": {
       "@/*": ["./client/*"],
-      "@shared/*": ["./shared/*"],
       "@assets/*": ["./assets/*"]
     },
     "types": ["node"]

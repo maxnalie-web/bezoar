@@ -69,9 +69,9 @@ export function ListItem({
       style={[
         styles.container,
         rtl && styles.containerRTL,
-        { 
+        {
           backgroundColor: theme.backgroundDefault,
-          borderColor: isDark ? "rgba(168, 85, 247, 0.15)" : "rgba(168, 85, 247, 0.08)",
+          borderColor: theme.accent + (isDark ? "26" : "14"),
         },
         animatedStyle,
       ]}
@@ -79,9 +79,7 @@ export function ListItem({
       {leftIcon ? (
         <View style={styles.iconWrapper}>
           <LinearGradient
-            colors={isDark 
-              ? ["rgba(168, 85, 247, 0.20)", "rgba(124, 58, 237, 0.10)"]
-              : ["rgba(168, 85, 247, 0.12)", "rgba(124, 58, 237, 0.06)"]}
+            colors={[theme.accent + (isDark ? "33" : "1F"), theme.accentTertiary + (isDark ? "1A" : "0F")]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[styles.iconContainer, rtl && styles.iconContainerRTL]}
@@ -110,6 +108,7 @@ export function ListItem({
         <View
           style={[
             styles.badge,
+            rtl ? { marginRight: 0, marginLeft: Spacing.sm } : null,
             { backgroundColor: (badgeColor || theme.accent) + "20" },
           ]}
         >
@@ -150,7 +149,7 @@ const styles = StyleSheet.create({
   iconWrapper: {
     ...Platform.select({
       ios: {
-        shadowColor: "#A855F7",
+        shadowColor: "#00CFCC",
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.2,
         shadowRadius: 6,

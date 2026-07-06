@@ -1,11 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Patient, Drug, Sale, Installment, AppData } from "@/types/models";
+import { Platform } from "react-native";
+import { Patient, Drug, Sale, Installment, AppData, StockMovement, StockMovementType, Reminder, ReminderType, PatientAttachment } from "@/types/models";
 
 const STORAGE_KEYS = {
   PATIENTS: "@bezoar/patients",
   DRUGS: "@bezoar/drugs",
   SALES: "@bezoar/sales",
   INSTALLMENTS: "@bezoar/installments",
+  STOCK_MOVEMENTS: "@bezoar/stockMovements",
+  REMINDERS: "@bezoar/reminders",
 };
 
 function generateId(): string {
@@ -53,6 +56,68 @@ export async function deletePatient(id: string): Promise<boolean> {
   if (filtered.length === patients.length) return false;
   await AsyncStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(filtered));
   return true;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Patient attachments (medical photos / documents) — copied into a
+// permanent local app folder so they survive after the picker's
+// temporary cache is cleared.
+// ─────────────────────────────────────────────────────────────
+
+export async function addPatientAttachment(
+  patientId: string,
+  pickedUri: string,
+  fileName: string,
+  type: PatientAttachment["type"]
+): Promise<Patient | null> {
+  let storedUri = pickedUri;
+
+  if (Platform.OS !== "web") {
+    const FileSystem = await import("expo-file-system/legacy");
+    const dir = FileSystem.documentDirectory + "patient-attachments/" + patientId + "/";
+    await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
+    const dest = dir + generateId() + "-" + fileName;
+    await FileSystem.copyAsync({ from: pickedUri, to: dest });
+    storedUri = dest;
+  }
+
+  const patients = await getPatients();
+  const index = patients.findIndex((p) => p.id === patientId);
+  if (index === -1) return null;
+
+  const attachment: PatientAttachment = {
+    id: generateId(),
+    type,
+    name: fileName,
+    uri: storedUri,
+    addedAt: getTimestamp(),
+  };
+
+  const attachments = [...(patients[index].attachments ?? []), attachment];
+  patients[index] = { ...patients[index], attachments, updatedAt: getTimestamp() };
+  await AsyncStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patients));
+  return patients[index];
+}
+
+export async function deletePatientAttachment(patientId: string, attachmentId: string): Promise<Patient | null> {
+  const patients = await getPatients();
+  const index = patients.findIndex((p) => p.id === patientId);
+  if (index === -1) return null;
+
+  const target = patients[index].attachments?.find((a) => a.id === attachmentId);
+  if (target && Platform.OS !== "web") {
+    try {
+      const FileSystem = await import("expo-file-system/legacy");
+      await FileSystem.deleteAsync(target.uri, { idempotent: true });
+    } catch {
+      // ignore filesystem errors, still remove the reference below
+    }
+  }
+
+  const attachments = (patients[index].attachments ?? []).filter((a) => a.id !== attachmentId);
+  patients[index] = { ...patients[index], attachments, updatedAt: getTimestamp() };
+  await AsyncStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patients));
+  return patients[index];
 }
 
 export async function getDrugs(): Promise<Drug[]> {
@@ -129,6 +194,15 @@ export async function saveSale(
   sale: Omit<Sale, "id" | "createdAt" | "updatedAt">
 ): Promise<Sale> {
   const sales = await getSales();
+
+  if (!sale.isGift) {
+    await adjustDrugStock(sale.drugId, -sale.bottleCount, "sale", "فروش");
+    if (Array.isArray(sale.auxiliaryDrugs)) {
+      for (const aux of sale.auxiliaryDrugs) {
+        await adjustDrugStock(aux.drugId, -aux.quantity, "sale", "فروش (جانبی)");
+      }
+    }
+  }
 
   let mainTotal = sale.bottleCount * sale.unitPrice;
   let auxiliaryTotal = Array.isArray(sale.auxiliaryDrugs)
@@ -253,13 +327,15 @@ export async function updateInstallment(id: string, updates: Partial<Installment
 }
 
 export async function getAllData(): Promise<AppData> {
-  const [patients, drugs, sales, installments] = await Promise.all([
+  const [patients, drugs, sales, installments, stockMovements, reminders] = await Promise.all([
     getPatients(),
     getDrugs(),
     getSales(),
     getInstallments(),
+    getStockMovements(),
+    getReminders(),
   ]);
-  return { patients, drugs, sales, installments };
+  return { patients, drugs, sales, installments, stockMovements, reminders };
 }
 
 function mergeArraysById<T extends { id: string }>(existing: T[], incoming: T[]): { merged: T[]; newCount: number } {
@@ -310,6 +386,8 @@ export async function restoreData(data: AppData): Promise<RestoreResult> {
 
 export async function clearAllData(): Promise<void> {
   await Promise.all([
+    AsyncStorage.removeItem(STORAGE_KEYS.STOCK_MOVEMENTS),
+    AsyncStorage.removeItem(STORAGE_KEYS.REMINDERS),
     AsyncStorage.removeItem(STORAGE_KEYS.PATIENTS),
     AsyncStorage.removeItem(STORAGE_KEYS.DRUGS),
     AsyncStorage.removeItem(STORAGE_KEYS.SALES),
@@ -327,6 +405,182 @@ export type SearchResult =
       sale: Sale;
       patient?: Patient;
     };
+
+// ─────────────────────────────────────────────────────────────
+// Stock / inventory management
+// ─────────────────────────────────────────────────────────────
+
+export async function getStockMovements(): Promise<StockMovement[]> {
+  try {
+    const data = await AsyncStorage.getItem(STORAGE_KEYS.STOCK_MOVEMENTS);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function adjustDrugStock(
+  drugId: string,
+  delta: number,
+  type: StockMovementType,
+  note?: string
+): Promise<void> {
+  const drugs = await getDrugs();
+  const index = drugs.findIndex((d) => d.id === drugId);
+  if (index === -1) return;
+
+  const current = drugs[index].stockQuantity ?? 0;
+  const next = Math.max(0, current + delta);
+  drugs[index] = { ...drugs[index], stockQuantity: next, updatedAt: getTimestamp() };
+  await AsyncStorage.setItem(STORAGE_KEYS.DRUGS, JSON.stringify(drugs));
+
+  const movements = await getStockMovements();
+  movements.push({
+    id: generateId(),
+    drugId,
+    type,
+    quantity: delta,
+    note,
+    createdAt: getTimestamp(),
+  });
+  await AsyncStorage.setItem(STORAGE_KEYS.STOCK_MOVEMENTS, JSON.stringify(movements));
+}
+
+export async function getLowStockDrugs(): Promise<Drug[]> {
+  const drugs = await getDrugs();
+  return drugs.filter((d) => {
+    const stock = d.stockQuantity ?? 0;
+    const threshold = d.lowStockThreshold ?? 0;
+    return threshold > 0 && stock <= threshold;
+  });
+}
+
+export async function getDrugStockMovements(drugId: string): Promise<StockMovement[]> {
+  const movements = await getStockMovements();
+  return movements
+    .filter((m) => m.drugId === drugId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+// ─────────────────────────────────────────────────────────────
+// Reminders / notifications
+// ─────────────────────────────────────────────────────────────
+
+export async function getReminders(): Promise<Reminder[]> {
+  try {
+    const data = await AsyncStorage.getItem(STORAGE_KEYS.REMINDERS);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function addReminder(
+  reminder: Omit<Reminder, "id" | "createdAt" | "isDone">
+): Promise<Reminder> {
+  const reminders = await getReminders();
+  const newReminder: Reminder = {
+    ...reminder,
+    id: generateId(),
+    isDone: false,
+    createdAt: getTimestamp(),
+  };
+  reminders.push(newReminder);
+  await AsyncStorage.setItem(STORAGE_KEYS.REMINDERS, JSON.stringify(reminders));
+  return newReminder;
+}
+
+export async function updateReminder(id: string, updates: Partial<Reminder>): Promise<Reminder | null> {
+  const reminders = await getReminders();
+  const index = reminders.findIndex((r) => r.id === id);
+  if (index === -1) return null;
+  reminders[index] = { ...reminders[index], ...updates };
+  await AsyncStorage.setItem(STORAGE_KEYS.REMINDERS, JSON.stringify(reminders));
+  return reminders[index];
+}
+
+export async function deleteReminder(id: string): Promise<boolean> {
+  const reminders = await getReminders();
+  const filtered = reminders.filter((r) => r.id !== id);
+  if (filtered.length === reminders.length) return false;
+  await AsyncStorage.setItem(STORAGE_KEYS.REMINDERS, JSON.stringify(filtered));
+  return true;
+}
+
+export interface NotificationItem {
+  id: string;
+  type: ReminderType;
+  title: string;
+  description: string;
+  dueDate: string;
+  isOverdue: boolean;
+  isDone: boolean;
+  relatedId?: string;
+}
+
+/**
+ * Builds a unified notification feed from installment due dates, low-stock
+ * drugs, and any custom reminders the user created — so the Notifications
+ * screen doesn't need separate lists for auto-generated vs manual items.
+ */
+export async function getNotificationFeed(): Promise<NotificationItem[]> {
+  const [installments, sales, patients, lowStockDrugs, customReminders] = await Promise.all([
+    getInstallments(),
+    getSales(),
+    getPatients(),
+    getLowStockDrugs(),
+    getReminders(),
+  ]);
+
+  const now = new Date();
+  const items: NotificationItem[] = [];
+
+  installments
+    .filter((i) => i.status === "unpaid")
+    .forEach((i) => {
+      const sale = sales.find((s) => s.id === i.saleId);
+      const patient = sale ? patients.find((p) => p.id === sale.patientId) : undefined;
+      const name = patient ? `${patient.firstName} ${patient.lastName}` : "بیمار";
+      items.push({
+        id: `installment-${i.id}`,
+        type: "installment",
+        title: `قسط ${i.installmentNumber} - ${name}`,
+        description: `مبلغ ${i.amount.toLocaleString("fa-IR")} تومان`,
+        dueDate: i.dueDate,
+        isOverdue: new Date(i.dueDate) < now,
+        isDone: false,
+        relatedId: i.saleId,
+      });
+    });
+
+  lowStockDrugs.forEach((d) => {
+    items.push({
+      id: `lowstock-${d.id}`,
+      type: "lowStock",
+      title: `موجودی کم: ${d.name}`,
+      description: `${d.stockQuantity ?? 0} ${d.unit} باقی‌مانده`,
+      dueDate: now.toISOString(),
+      isOverdue: (d.stockQuantity ?? 0) <= 0,
+      isDone: false,
+      relatedId: d.id,
+    });
+  });
+
+  customReminders.forEach((r) => {
+    items.push({
+      id: r.id,
+      type: r.type,
+      title: r.title,
+      description: r.description ?? "",
+      dueDate: r.dueDate,
+      isOverdue: new Date(r.dueDate) < now && !r.isDone,
+      isDone: r.isDone,
+      relatedId: r.relatedId,
+    });
+  });
+
+  return items.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+}
 
 export async function searchAll(query: string): Promise<SearchResult[]> {
   const q = query.trim().toLowerCase();

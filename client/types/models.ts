@@ -1,3 +1,13 @@
+export type PatientAttachmentType = "image" | "document";
+
+export interface PatientAttachment {
+  id: string;
+  type: PatientAttachmentType;
+  name: string;
+  uri: string;
+  addedAt: string;
+}
+
 export interface Patient {
   id: string;
   firstName: string;
@@ -13,6 +23,7 @@ export interface Patient {
   treatmentPlan: string;
   treatmentDuration: string;
   doctorNotes: string;
+  attachments?: PatientAttachment[];
   createdAt: string;
   updatedAt: string;
 }
@@ -29,6 +40,10 @@ export interface Drug {
 
   // Bezoar = داروی اصلی (قابل حذف نیست)
   isMain?: boolean;
+
+  // مدیریت موجودی
+  stockQuantity?: number;
+  lowStockThreshold?: number;
 
   createdAt: string;
   updatedAt: string;
@@ -82,11 +97,37 @@ export interface Installment {
   createdAt: string;
 }
 
+export type StockMovementType = "in" | "out" | "adjustment" | "sale";
+
+export interface StockMovement {
+  id: string;
+  drugId: string;
+  type: StockMovementType;
+  quantity: number;
+  note?: string;
+  createdAt: string;
+}
+
+export type ReminderType = "installment" | "lowStock" | "custom" | "followUp";
+
+export interface Reminder {
+  id: string;
+  type: ReminderType;
+  title: string;
+  description?: string;
+  dueDate: string;
+  isDone: boolean;
+  relatedId?: string;
+  createdAt: string;
+}
+
 export interface AppData {
   patients: Patient[];
   drugs: Drug[];
   sales: Sale[];
   installments: Installment[];
+  stockMovements?: StockMovement[];
+  reminders?: Reminder[];
 }
 
 export interface DashboardStats {

@@ -1,18 +1,16 @@
 import React from "react";
 import { I18nManager } from "react-native";
-import { StyleSheet, Pressable, ViewStyle, Platform, View } from "react-native";
-import { BlurView } from "expo-blur";
+import { StyleSheet, Pressable, ViewStyle, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   WithSpringConfig,
 } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Colors, Shadows } from "@/constants/theme";
+import { Spacing, BorderRadius, Elevation } from "@/constants/theme";
 
 interface GlassCardProps {
   title?: string;
@@ -22,6 +20,7 @@ interface GlassCardProps {
   style?: ViewStyle;
   noPadding?: boolean;
   elevated?: boolean;
+  accentColor?: string;
 }
 
 const springConfig: WithSpringConfig = {
@@ -34,6 +33,10 @@ const springConfig: WithSpringConfig = {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+/**
+ * Flat white "surface" card with a soft multi-level shadow — matches the
+ * reference style-guide's card + elevation system (no glass/blur effects).
+ */
 export function GlassCard({
   title,
   subtitle,
@@ -42,8 +45,9 @@ export function GlassCard({
   style,
   noPadding = false,
   elevated = false,
+  accentColor,
 }: GlassCardProps) {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -52,7 +56,7 @@ export function GlassCard({
 
   const handlePressIn = () => {
     if (onPress) {
-      scale.value = withSpring(0.97, springConfig);
+      scale.value = withSpring(0.98, springConfig);
     }
   };
 
@@ -82,60 +86,13 @@ export function GlassCard({
   const containerStyle = [
     styles.card,
     !noPadding && styles.cardPadding,
-    { 
-      borderColor: isDark ? Colors.dark.glassBorder : Colors.light.glassBorder,
+    {
+      backgroundColor: theme.backgroundDefault,
+      borderColor: accentColor ? accentColor + "35" : theme.glassBorder,
     },
-    elevated && Platform.OS === "ios" && Shadows.md,
+    elevated ? Elevation[3] : Elevation[1],
     style,
   ];
-
-  const renderBackground = () => {
-    if (Platform.OS === "ios") {
-      return (
-        <>
-          <BlurView
-            intensity={isDark ? 50 : 60}
-            tint={isDark ? "dark" : "light"}
-            style={[StyleSheet.absoluteFill, styles.blurView]}
-          />
-          <View 
-            style={[
-              StyleSheet.absoluteFill, 
-              styles.blurView, 
-              { 
-                backgroundColor: isDark 
-                  ? "rgba(168, 85, 247, 0.03)" 
-                  : "rgba(168, 85, 247, 0.02)" 
-              }
-            ]} 
-          />
-        </>
-      );
-    }
-    return (
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          styles.blurView,
-          { 
-            backgroundColor: isDark 
-              ? theme.backgroundDefault 
-              : theme.backgroundDefault,
-            borderWidth: 0,
-          },
-        ]}
-      >
-        <LinearGradient
-          colors={isDark 
-            ? ["rgba(168, 85, 247, 0.08)", "rgba(168, 85, 247, 0.02)"] 
-            : ["rgba(168, 85, 247, 0.04)", "rgba(168, 85, 247, 0.01)"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
-    );
-  };
 
   if (onPress) {
     return (
@@ -145,32 +102,22 @@ export function GlassCard({
         onPressOut={handlePressOut}
         style={[containerStyle, animatedStyle]}
       >
-        {renderBackground()}
         {cardContent}
       </AnimatedPressable>
     );
   }
 
-  return (
-    <Animated.View style={containerStyle}>
-      {renderBackground()}
-      {cardContent}
-    </Animated.View>
-  );
+  return <View style={containerStyle}>{cardContent}</View>;
 }
 
 const styles = StyleSheet.create({
   card: {
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    overflow: "hidden",
     alignSelf: "stretch",
   },
   cardPadding: {
     padding: Spacing.lg,
-  },
-  blurView: {
-    borderRadius: BorderRadius.xl,
   },
   cardTitle: {
     marginBottom: Spacing.xs,

@@ -1,17 +1,17 @@
 import React, { ReactNode } from "react";
-import { StyleSheet, Pressable, ViewStyle, StyleProp, ActivityIndicator, Platform } from "react-native";
+import { StyleSheet, Pressable, ViewStyle, StyleProp, ActivityIndicator } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
   WithSpringConfig,
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { BorderRadius, Spacing, Colors, Shadows } from "@/constants/theme";
+import { BorderRadius, Spacing, Shadows } from "@/constants/theme";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
@@ -46,47 +46,63 @@ export function Button({
   icon,
   size = "medium",
 }: ButtonProps) {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const scale = useSharedValue(1);
+  const glow = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
+    shadowOpacity: glow.value,
   }));
 
   const handlePressIn = () => {
     if (!disabled && !loading) {
       scale.value = withSpring(0.97, springConfig);
+      glow.value = withTiming(0.45, { duration: 150 });
     }
   };
 
   const handlePressOut = () => {
     if (!disabled && !loading) {
       scale.value = withSpring(1, springConfig);
+      glow.value = withTiming(0, { duration: 250 });
+    }
+  };
+
+  const getBackgroundColor = () => {
+    if (disabled) return theme.backgroundTertiary;
+    switch (variant) {
+      case "primary":
+        return theme.accent;
+      case "secondary":
+        return "transparent";
+      case "ghost":
+        return "transparent";
+      case "danger":
+        return theme.error;
+      default:
+        return theme.accent;
     }
   };
 
   const getTextColor = () => {
-    if (disabled) {
-      return theme.textSecondary;
-    }
+    if (disabled) return theme.textSecondary;
     switch (variant) {
       case "primary":
-        return "#FFFFFF";
+        return theme.buttonText;
       case "secondary":
-        return Colors.dark.accent;
+        return theme.accentDark;
       case "ghost":
         return theme.text;
       case "danger":
         return "#FFFFFF";
       default:
-        return "#FFFFFF";
+        return theme.buttonText;
     }
   };
 
   const getBorderColor = () => {
-    if (variant === "secondary") {
-      return Colors.dark.accent;
-    }
+    if (variant === "secondary") return theme.accent;
     return "transparent";
   };
 
@@ -103,28 +119,29 @@ export function Button({
     }
   };
 
-  const getGradientColors = (): [string, string] => {
-    if (disabled) {
-      return isDark 
-        ? [Colors.dark.backgroundSecondary, Colors.dark.backgroundSecondary]
-        : [Colors.light.backgroundSecondary, Colors.light.backgroundSecondary];
-    }
-    switch (variant) {
-      case "primary":
-        return ["#A855F7", "#7C3AED"];
-      case "secondary":
-        return ["transparent", "transparent"];
-      case "ghost":
-        return ["transparent", "transparent"];
-      case "danger":
-        return ["#EF4444", "#DC2626"];
-      default:
-        return ["#A855F7", "#7C3AED"];
-    }
-  };
-
-  const content = (
-    <>
+  return (
+    <AnimatedPressable
+      onPress={disabled || loading ? undefined : onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      disabled={disabled || loading}
+      style={[
+        styles.button,
+        {
+          backgroundColor: getBackgroundColor(),
+          borderColor: getBorderColor(),
+          borderWidth: variant === "secondary" ? 1.5 : 0,
+          height: getHeight(),
+          opacity: disabled ? 0.6 : 1,
+          shadowColor: theme.accentGlow,
+          shadowOffset: { width: 0, height: 0 },
+          shadowRadius: 14,
+        },
+        !disabled && variant === "primary" && Shadows.sm,
+        style,
+        animatedStyle,
+      ]}
+    >
       {loading ? (
         <ActivityIndicator color={getTextColor()} size="small" />
       ) : (
@@ -145,35 +162,6 @@ export function Button({
           </ThemedText>
         </>
       )}
-    </>
-  );
-
-  return (
-    <AnimatedPressable
-      onPress={disabled || loading ? undefined : onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      disabled={disabled || loading}
-      style={[
-        styles.button,
-        {
-          borderColor: getBorderColor(),
-          borderWidth: variant === "secondary" ? 2 : 0,
-          height: getHeight(),
-          opacity: disabled ? 0.5 : 1,
-        },
-        variant === "primary" && Platform.OS === "ios" && !disabled && Shadows.glow,
-        style,
-        animatedStyle,
-      ]}
-    >
-      <LinearGradient
-        colors={getGradientColors()}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[StyleSheet.absoluteFill, { borderRadius: BorderRadius.full }]}
-      />
-      {content}
     </AnimatedPressable>
   );
 }
@@ -185,10 +173,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: Spacing.xl,
-    overflow: "hidden",
   },
   buttonText: {
-    fontWeight: "600",
+    fontWeight: "700",
   },
   icon: {
     marginRight: Spacing.sm,

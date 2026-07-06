@@ -14,10 +14,12 @@ interface StatCardProps {
   icon: keyof typeof Feather.glyphMap;
   trend?: "up" | "down" | "neutral";
   onPress?: () => void;
+  color?: string;
 }
 
-export function StatCard({ title, value, icon, trend, onPress }: StatCardProps) {
+export function StatCard({ title, value, icon, trend, onPress, color }: StatCardProps) {
   const { theme, isDark } = useTheme();
+  const accent = color ?? theme.accent;
 
   const getTrendColor = () => {
     switch (trend) {
@@ -26,23 +28,21 @@ export function StatCard({ title, value, icon, trend, onPress }: StatCardProps) 
       case "down":
         return theme.error;
       default:
-        return theme.accent;
+        return accent;
     }
   };
 
   return (
-    <GlassCard onPress={onPress} style={styles.card} elevated>
+    <GlassCard onPress={onPress} style={styles.card} elevated accentColor={accent}>
       <View style={styles.header}>
-        <View style={styles.iconWrapper}>
+        <View style={[styles.iconWrapper, Platform.OS === "ios" ? { shadowColor: accent, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 } : null]}>
           <LinearGradient
-            colors={isDark 
-              ? ["rgba(168, 85, 247, 0.25)", "rgba(124, 58, 237, 0.15)"]
-              : ["rgba(168, 85, 247, 0.15)", "rgba(124, 58, 237, 0.08)"]}
+            colors={[accent + (isDark ? "40" : "26"), accent + (isDark ? "20" : "12")]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.iconContainer}
           >
-            <Feather name={icon} size={22} color={theme.accent} />
+            <Feather name={icon} size={22} color={accent} />
           </LinearGradient>
         </View>
         {trend ? (
@@ -79,13 +79,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Spacing.md,
   },
-  iconWrapper: {
-    ...Platform.select({
-      ios: Shadows.glow,
-      android: {},
-      default: {},
-    }),
-  },
+  iconWrapper: {},
   iconContainer: {
     width: 44,
     height: 44,
