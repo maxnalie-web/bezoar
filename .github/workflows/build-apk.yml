@@ -37,18 +37,14 @@ jobs:
             --status finished \
             --limit 1 \
             --json \
-            --non-interactive \
-            | python3 -c "
-import sys, json, urllib.request
-builds = json.load(sys.stdin)
-if builds:
-    url = builds[0].get('artifacts', {}).get('buildUrl', '')
-    if url:
-        urllib.request.urlretrieve(url, 'bezoar.apk')
-        print('Downloaded APK from', url[:80])
-else:
-    print('No builds found')
-"
+            --non-interactive > builds.json
+          APK_URL=$(node -e "const b=require('./builds.json'); console.log(b[0]?.artifacts?.buildUrl||'')")
+          if [ -n "$APK_URL" ]; then
+            curl -L -o bezoar.apk "$APK_URL"
+            echo "Downloaded APK"
+          else
+            echo "No APK URL"; cat builds.json; exit 1
+          fi
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
