@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,12 +26,7 @@ jobs:
         run: npm install -g eas-cli@latest
 
       - name: Build APK via EAS Cloud
-        run: |
-          eas build \
-            --platform android \
-            --profile preview \
-            --non-interactive \
-            --wait
+        run: eas build --platform android --profile preview --non-interactive --wait
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
@@ -47,9 +45,7 @@ if builds:
     url = builds[0].get('artifacts', {}).get('buildUrl', '')
     if url:
         urllib.request.urlretrieve(url, 'bezoar.apk')
-        print('Downloaded APK')
-    else:
-        print('No buildUrl:', json.dumps(builds[0].get('artifacts'), indent=2))
+        print('Downloaded APK from', url[:80])
 else:
     print('No builds found')
 "
