@@ -300,7 +300,10 @@ export default function DashboardScreen() {
                   <GlassCard style={styles.listItem} elevated accentColor={AuroraGradient.teal}>
                     <Pressable
                       style={styles.listItemContent}
-                      onPress={() => (navigation as any).navigate("PatientDetail", { patientId: p.id })}
+                      onPress={() => (navigation as any).navigate("MainTabs", {
+              screen: "Patients",
+              params: { screen: "PatientDetail", params: { patientId: p.id } },
+            })}
                     >
                       <View style={[styles.avatarDot, { backgroundColor: AuroraGradient.teal + "22" }]}>
                         <Feather name="user" size={16} color={AuroraGradient.teal} />
@@ -357,7 +360,10 @@ export default function DashboardScreen() {
                     <GlassCard style={styles.listItem} elevated accentColor={badgeColor}>
                       <Pressable
                         style={styles.listItemContent}
-                        onPress={() => (navigation as any).navigate("SaleDetail", { saleId: s.id })}
+                        onPress={() => (navigation as any).navigate("MainTabs", {
+              screen: "Sales",
+              params: { screen: "SaleDetail", params: { saleId: s.id } },
+            })}
                       >
                         <View style={[styles.avatarDot, { backgroundColor: badgeColor + "20" }]}>
                           <Feather name="package" size={16} color={badgeColor} />
