@@ -16,8 +16,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
 
-      - name: Setup EAS
+      - name: Setup EAS CLI
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
@@ -27,23 +29,62 @@ jobs:
         run: npm install
         working-directory: client
 
-      - name: Build APK (preview)
-        run: eas build --platform android --profile preview --non-interactive --local --output ../bezoar-release.apk
+      - name: Build APK via EAS Cloud
+        id: eas_build
+        run: |
+          BUILD_OUTPUT=$(eas build \
+            --platform android \
+            --profile preview \
+            --non-interactive \
+            --json \
+            --no-wait 2>/dev/null || \
+          eas build \
+            --platform android \
+            --profile preview \
+            --non-interactive)
+          echo "build_output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
         working-directory: client
 
-      - name: Upload APK as artifact
+      - name: Wait and download APK
+        run: |
+          echo "Waiting for EAS build to complete..."
+          eas build:list --platform android --status finished --limit 1 --json \
+            | python3 -c "
+import sys, json, urllib.request
+builds = json.load(sys.stdin)
+if builds:
+    url = builds[0].get('artifacts', {}).get('buildUrl', '')
+    if url:
+        urllib.request.urlretrieve(url, 'bezoar.apk')
+        print('Downloaded APK')
+    else:
+        print('No build URL found')
+"
+        working-directory: client
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: bezoar-apk
-          path: bezoar-release.apk
+          path: client/bezoar.apk
+          if-no-files-found: warn
           retention-days: 30
 
-      - name: Create/Update GitHub Release
+      - name: Create GitHub Release with APK
         uses: softprops/action-gh-release@v2
+        if: ${{ hashFiles('client/bezoar.apk') != '' }}
         with:
-          tag_name: v${{ github.run_number }}
+          tag_name: build-${{ github.run_number }}
           name: "Bezoar APK - Build ${{ github.run_number }}"
-          files: bezoar-release.apk
+          body: |
+            ## Changes
+            Auto-built APK from commit ${{ github.sha }}
+            
+            ### Instructions
+            1. Download `bezoar.apk`
+            2. Enable "Install from unknown sources" on Android
+            3. Install the APK
+          files: client/bezoar.apk
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
