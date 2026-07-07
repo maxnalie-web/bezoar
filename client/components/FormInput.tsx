@@ -52,17 +52,7 @@ export const FormInput = forwardRef<any, FormInputProps>(
             type="small"
             style={[
               styles.label,
-              {
-                color: focused ? theme.accentDark : theme.textSecondary,
-                backgroundColor: theme.backgroundRoot,
-              },
-              typeof label === "string" &&
-                (label === "اطلاعات پزشکی" || label === "اطلاعات هویتی") && {
-                  top: -Spacing["5xl"],
-                  marginBottom: Spacing.lg,
-                  fontSize: 22,
-                  fontWeight: "600",
-                },
+              { color: focused ? theme.accentDark : theme.textSecondary },
               labelStyle,
             ]}
           >
@@ -138,17 +128,14 @@ FormInput.displayName = "FormInput";
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: Spacing["2xl"],
-    paddingTop: Spacing.lg,
+    marginBottom: Spacing.lg,
   },
   label: {
-    position: "absolute",
-    top: -Spacing.md,
-    right: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
-    fontWeight: "500",
-    fontSize: 18,
-    zIndex: 2,
+    textAlign: "right",
+    fontWeight: "600",
+    fontSize: 13,
+    marginBottom: Spacing.xs,
+    marginRight: Spacing.xs,
   },
   labelRTL: {
     textAlign: "right",
@@ -159,7 +146,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     minHeight: 48,
-    marginTop: Spacing.xs,
   },
   inputContainerRTL: {
     flexDirection: "row-reverse",

@@ -88,6 +88,10 @@ export default function SearchScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+        <View style={styles.iconBtn} />
+
+        <ThemedText type="h3">{t("search") || "جستجو"}</ThemedText>
+
         <Pressable
           onPress={() =>
             (navigation as any).canGoBack()
@@ -102,10 +106,6 @@ export default function SearchScreen() {
             color={theme.text}
           />
         </Pressable>
-
-        <ThemedText type="h3">{t("search") || "جستجو"}</ThemedText>
-
-        <View style={styles.iconBtn} />
       </View>
 
       {/* Search Input */}

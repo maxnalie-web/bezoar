@@ -426,7 +426,6 @@ export default function PatientsScreen() {
                   value={dateFrom}
                   onChangeText={setDateFrom}
                   placeholder="۱۴۰۰-۰۱-۰۱"
-                  labelStyle={{ textAlign: "right", alignSelf: "flex-end", width: "100%", fontSize: 14 }}
                 />
               </View>
               <View style={{ flex: 1 }}>
@@ -435,7 +434,6 @@ export default function PatientsScreen() {
                   value={dateTo}
                   onChangeText={setDateTo}
                   placeholder="۱۴۰۳-۱۲-۲۹"
-                  labelStyle={{ textAlign: "right", alignSelf: "flex-end", width: "100%", fontSize: 14 }}
                 />
               </View>
             </View>

@@ -203,24 +203,12 @@ export default function PatientDetailScreen() {
             value={form.firstName}
             onChangeText={(value) => updateField("firstName", value)}
             placeholder={t("enterFirstName")}
-            labelStyle={{
-              textAlign: "right",
-              alignSelf: "flex-end",
-              width: "100%",
-              fontSize: 18
-            }}
           />
           <FormInput
             label={t("lastName")}
             value={form.lastName}
             onChangeText={(value) => updateField("lastName", value)}
             placeholder={t("enterLastName")}
-            labelStyle={{
-              textAlign: "right",
-              alignSelf: "flex-end",
-              width: "100%",
-              fontSize: 18
-            }}
           />
           <FormInput
             label={t("nationalId")}
@@ -228,12 +216,6 @@ export default function PatientDetailScreen() {
             onChangeText={(value) => updateField("nationalId", value)}
             placeholder={t("enterNationalId")}
             keyboardType="numeric"
-            labelStyle={{
-              textAlign: "right",
-              alignSelf: "flex-end",
-              width: "100%",
-              fontSize: 18
-            }}
           />
           <FormInput
             label={t("phone")}
@@ -241,12 +223,6 @@ export default function PatientDetailScreen() {
             onChangeText={(value) => updateField("phone", value)}
             placeholder={t("enterPhone")}
             keyboardType="phone-pad"
-            labelStyle={{
-              textAlign: "right",
-              alignSelf: "flex-end",
-              width: "100%",
-              fontSize: 18
-            }}
           />
           <FormInput
             label={t("address")}
@@ -254,24 +230,12 @@ export default function PatientDetailScreen() {
             onChangeText={(value) => updateField("address", value)}
             placeholder={t("enterAddress")}
             multiline
-            labelStyle={{
-              textAlign: "right",
-              alignSelf: "flex-end",
-              width: "100%",
-              fontSize: 18
-            }}
           />
           <FormInput
             label={t("dateOfBirth")}
             value={form.dateOfBirth}
             onChangeText={(value) => updateField("dateOfBirth", value)}
             placeholder="۱۳۸۰-۰۱-۰۱"
-            labelStyle={{
-              textAlign: "right",
-              alignSelf: "flex-end",
-              width: "100%",
-              fontSize: 18
-            }}
           />
         </GlassCard>
 
@@ -283,12 +247,6 @@ export default function PatientDetailScreen() {
             value={form.mainDisease}
             onChangeText={(value) => updateField("mainDisease", value)}
             placeholder={t("enterMainDisease")}
-            labelStyle={{
-              textAlign: "right",
-              alignSelf: "flex-end",
-              width: "100%",
-              fontSize: 18
-            }}
           />
           <FormInput
             label={t("backgroundDiseases")}
@@ -296,12 +254,6 @@ export default function PatientDetailScreen() {
             onChangeText={(value) => updateField("backgroundDiseases", value)}
             placeholder={t("enterBackgroundDiseases")}
             multiline
-            labelStyle={{
-              textAlign: "right",
-              alignSelf: "flex-end",
-              width: "100%",
-              fontSize: 18
-            }}
           />
           <FormInput
             label={t("medicalDescription")}
@@ -309,12 +261,6 @@ export default function PatientDetailScreen() {
             onChangeText={(value) => updateField("medicalDescription", value)}
             placeholder={t("enterMedicalDescription")}
             multiline
-            labelStyle={{
-              textAlign: "right",
-              alignSelf: "flex-end",
-              width: "100%",
-              fontSize: 18
-            }}
           />
           <FormInput
             label={t("treatmentPlan")}
@@ -322,24 +268,12 @@ export default function PatientDetailScreen() {
             onChangeText={(value) => updateField("treatmentPlan", value)}
             placeholder={t("enterTreatmentPlan")}
             multiline
-            labelStyle={{
-              textAlign: "right",
-              alignSelf: "flex-end",
-              width: "100%",
-              fontSize: 18
-            }}
           />
           <FormInput
             label={t("treatmentDuration")}
             value={form.treatmentDuration}
             onChangeText={(value) => updateField("treatmentDuration", value)}
             placeholder={t("enterTreatmentDuration")}
-            labelStyle={{
-              textAlign: "right",
-              alignSelf: "flex-end",
-              width: "100%",
-              fontSize: 18
-            }}
           />
           <FormInput
             label={t("doctorNotes")}
@@ -347,12 +281,6 @@ export default function PatientDetailScreen() {
             onChangeText={(value) => updateField("doctorNotes", value)}
             placeholder={t("enterDoctorNotes")}
             multiline
-            labelStyle={{
-              textAlign: "right",
-              alignSelf: "flex-end",
-              width: "100%",
-              fontSize: 18
-            }}
           />
         </GlassCard>
 
