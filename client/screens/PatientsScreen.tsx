@@ -209,7 +209,7 @@ export default function PatientsScreen() {
                   marginLeft: Spacing.sm,
                 }}
               >
-                <ThemedText type="small" style={{ color: theme.error, fontWeight: "600", textAlign: "left" }}>
+                <ThemedText type="small" style={{ color: theme.error, fontWeight: "600", textAlign: "right" }}>
                   بدهکار
                 </ThemedText>
               </View>
@@ -225,13 +225,13 @@ export default function PatientsScreen() {
           <View style={[styles.patientDetails, styles.patientDetailsRTL]}>
             <View style={[styles.detailRow, styles.detailRowRTL]}>
               <Feather name="phone" size={14} color={theme.textSecondary} />
-              <ThemedText type="small" style={[styles.detailText, styles.detailTextRTL, { color: theme.textSecondary, textAlign: "left" }]}>
+              <ThemedText type="small" style={[styles.detailText, styles.detailTextRTL, { color: theme.textSecondary, textAlign: "right" }]}>
                 {item.phone || "بدون تلفن"}
               </ThemedText>
             </View>
             <View style={[styles.detailRow, styles.detailRowRTL]}>
               <Feather name="activity" size={14} color={theme.textSecondary} />
-              <ThemedText type="small" style={[styles.detailText, styles.detailTextRTL, { color: theme.textSecondary, textAlign: "left" }]}>
+              <ThemedText type="small" style={[styles.detailText, styles.detailTextRTL, { color: theme.textSecondary, textAlign: "right" }]}>
                 {item.mainDisease || "بدون تشخیص"}
               </ThemedText>
             </View>
@@ -290,7 +290,7 @@ export default function PatientsScreen() {
               borderColor: filter === "all" ? theme.accentSecondary + "55" : "transparent",
             }}
           >
-            <ThemedText type="body" style={{ color: filter === "all" ? theme.accentSecondary : theme.textSecondary, textAlign: "left" }}>
+            <ThemedText type="body" style={{ color: filter === "all" ? theme.accentSecondary : theme.textSecondary, textAlign: "right" }}>
               همه
             </ThemedText>
           </Pressable>
@@ -306,7 +306,7 @@ export default function PatientsScreen() {
               borderColor: filter === "debtors" ? theme.error + "55" : "transparent",
             }}
           >
-            <ThemedText type="body" style={{ color: filter === "debtors" ? theme.error : theme.textSecondary, textAlign: "left" }}>
+            <ThemedText type="body" style={{ color: filter === "debtors" ? theme.error : theme.textSecondary, textAlign: "right" }}>
               بدهکاران
             </ThemedText>
           </Pressable>
@@ -360,7 +360,7 @@ export default function PatientsScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptySearch}>
-              <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "left" }}>
+              <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "right" }}>
                 {t("noPatients")}
               </ThemedText>
             </View>
@@ -426,7 +426,7 @@ export default function PatientsScreen() {
                   value={dateFrom}
                   onChangeText={setDateFrom}
                   placeholder="۱۴۰۰-۰۱-۰۱"
-                  labelStyle={{ textAlign: "left", alignSelf: "flex-start", width: "100%", fontSize: 14 }}
+                  labelStyle={{ textAlign: "right", alignSelf: "flex-end", width: "100%", fontSize: 14 }}
                 />
               </View>
               <View style={{ flex: 1 }}>
@@ -435,7 +435,7 @@ export default function PatientsScreen() {
                   value={dateTo}
                   onChangeText={setDateTo}
                   placeholder="۱۴۰۳-۱۲-۲۹"
-                  labelStyle={{ textAlign: "left", alignSelf: "flex-start", width: "100%", fontSize: 14 }}
+                  labelStyle={{ textAlign: "right", alignSelf: "flex-end", width: "100%", fontSize: 14 }}
                 />
               </View>
             </View>

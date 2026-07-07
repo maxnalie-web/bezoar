@@ -208,14 +208,14 @@ export default function DashboardScreen() {
           <View style={styles.heroContent}>
             <View style={styles.heroTextWrapper}>
               <View style={[styles.heroBadge, { backgroundColor: theme.accent + "30" }]}>
-                <ThemedText type="caption" style={{ color: theme.accentDark, fontWeight: "700", textAlign: "left" }}>
+                <ThemedText type="caption" style={{ color: theme.accentDark, fontWeight: "700", textAlign: "right" }}>
                   فروش ماهانه
                 </ThemedText>
               </View>
-              <ThemedText type="title" style={{ marginTop: Spacing.sm, textAlign: "left", color: theme.text }}>
+              <ThemedText type="title" style={{ marginTop: Spacing.sm, textAlign: "right", color: theme.text }}>
                 {formatCurrency(stats.monthlySales)}
               </ThemedText>
-              <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xs, textAlign: "left" }}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xs, textAlign: "right" }}>
                 مجموع فروش این ماه
               </ThemedText>
             </View>
@@ -262,7 +262,7 @@ export default function DashboardScreen() {
                       type="title"
                       numberOfLines={1}
                       adjustsFontSizeToFit
-                      style={{ color: kpi.color, textAlign: "left" }}
+                      style={{ color: kpi.color, textAlign: "right" }}
                     >
                       {kpi.value}
                     </ThemedText>
@@ -271,7 +271,7 @@ export default function DashboardScreen() {
                       numberOfLines={2}
                       style={{
                         color: theme.textSecondary,
-                        textAlign: "left",
+                        textAlign: "right",
                         flexShrink: 1,
                         lineHeight: 20,
                       }}
@@ -375,14 +375,14 @@ export default function DashboardScreen() {
                             styles.badge,
                             {
                               backgroundColor: badgeColor,
-                              flexDirection: "row",
+                              flexDirection: "row-reverse",
                               alignItems: "center",
                               gap: 4,
                             },
                           ]}
                         >
                           {s.isGift && <Feather name="gift" size={12} color="#fff" />}
-                          <ThemedText type="caption" style={{ color: "#fff", textAlign: "left" }}>
+                          <ThemedText type="caption" style={{ color: "#fff", textAlign: "right" }}>
                             {paymentLabel()}
                           </ThemedText>
                         </View>
@@ -480,14 +480,14 @@ const styles = StyleSheet.create({
     right: -30,
   },
   heroContent: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     justifyContent: "space-between",
   },
   heroTextWrapper: {
     flex: 1,
-    paddingLeft: Spacing.lg,
-    alignItems: "flex-start",
+    paddingRight: Spacing.lg,
+    alignItems: "flex-end",
   },
   heroBadge: {
     borderRadius: BorderRadius.full,
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   kpiContent: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
   },
   kpiIconWrapper: {
@@ -527,11 +527,11 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: Spacing.md,
+    marginLeft: Spacing.md,
   },
   kpiTextWrapper: {
     flex: 1,
-    marginRight: Spacing.md,
+    marginLeft: Spacing.md,
     minWidth: 0,
   },
   sectionCard: {
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   listItemContent: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     justifyContent: "space-between",
     width: "100%",
@@ -576,17 +576,17 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: Spacing.sm,
+    marginRight: Spacing.sm,
   },
   listTextWrapper: {
     flex: 1,
-    paddingLeft: Spacing.md,
+    paddingRight: Spacing.md,
   },
   badge: {
     borderRadius: BorderRadius.sm,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
-    marginLeft: Spacing.md,
+    marginRight: Spacing.md,
     minWidth: 70,
     alignItems: "center",
     justifyContent: "center",

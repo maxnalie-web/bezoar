@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   themeIconContainer: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
   },
   iconBadge: {
@@ -240,16 +240,16 @@ const styles = StyleSheet.create({
   },
   themeTextBlock: {
     justifyContent: "center",
-    alignItems: "flex-start",
-    marginLeft: Spacing.md,
+    alignItems: "flex-end",
+    marginRight: Spacing.md,
   },
   themeSubtitle: {
     marginTop: 6,
-    textAlign: "left",
+    textAlign: "right",
   },
   themeTitle: {
     fontWeight: "500",
-    textAlign: "left",
+    textAlign: "right",
   },
   appInfo: {
     alignItems: "center",

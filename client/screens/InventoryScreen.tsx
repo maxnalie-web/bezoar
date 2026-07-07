@@ -7,13 +7,12 @@ import Animated, { FadeInRight } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
 import { GlassCard } from "@/components/GlassCard";
-import { StatCard } from "@/components/StatCard";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Spacing, BorderRadius, AuroraGradient } from "@/constants/theme";
-import { getDrugs, adjustDrugStock, getDrugStockMovements } from "@/lib/storage";
+import { getDrugs, adjustDrugStock, getDrugStockMovements, updateDrug } from "@/lib/storage";
 import { Drug, StockMovement } from "@/types/models";
 
 export default function InventoryScreen() {
@@ -77,17 +76,12 @@ export default function InventoryScreen() {
 
   const saveThreshold = async () => {
     if (!selectedDrug) return;
-    const { updateDrug } = await import("@/lib/storage");
     const threshold = parseInt(thresholdValue, 10) || 0;
     await updateDrug(selectedDrug.id, { lowStockThreshold: threshold });
     await loadDrugs();
     Alert.alert(t("success"), "آستانه هشدار بروزرسانی شد");
   };
 
-  const totalStockValue = drugs.reduce(
-    (sum, d) => sum + (d.stockQuantity ?? 0) * d.purchasePrice,
-    0
-  );
   const lowStockCount = drugs.filter((d) => {
     const stock = d.stockQuantity ?? 0;
     const threshold = d.lowStockThreshold ?? 0;
@@ -95,7 +89,11 @@ export default function InventoryScreen() {
   }).length;
   const outOfStockCount = drugs.filter((d) => (d.stockQuantity ?? 0) <= 0).length;
 
-  const formatCurrency = (amount: number) => amount.toLocaleString("fa-IR") + " " + t("toman");
+  const summaryItems = [
+    { label: t("inventory"), value: drugs.length, icon: "package" as const, color: AuroraGradient.teal },
+    { label: t("lowStock"), value: lowStockCount, icon: "alert-circle" as const, color: theme.warning },
+    { label: t("outOfStock"), value: outOfStockCount, icon: "alert-triangle" as const, color: theme.error },
+  ];
 
   const renderDrug = ({ item, index }: { item: Drug; index: number }) => {
     const stock = item.stockQuantity ?? 0;
@@ -108,22 +106,22 @@ export default function InventoryScreen() {
       <Animated.View entering={FadeInRight.delay(index * 40).duration(300)}>
         <GlassCard style={styles.drugCard} onPress={() => openDrug(item)} elevated accentColor={statusColor}>
           <View style={styles.rowBetween}>
-            <View style={styles.flexShrink}>
-              <ThemedText type="body" style={{ fontWeight: "600" }} numberOfLines={1}>
-                {item.name}
-              </ThemedText>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                {item.code} · {item.unit}
-              </ThemedText>
-            </View>
             <View style={[styles.stockBadge, { backgroundColor: statusColor + "20" }]}>
               <Feather
                 name={isOut ? "alert-triangle" : isLow ? "alert-circle" : "check-circle"}
                 size={14}
                 color={statusColor}
               />
-              <ThemedText type="small" style={{ color: statusColor, fontWeight: "700", marginRight: 4 }}>
+              <ThemedText type="small" style={{ color: statusColor, fontWeight: "700" }}>
                 {stock.toLocaleString("fa-IR")}
+              </ThemedText>
+            </View>
+            <View style={styles.flexShrink}>
+              <ThemedText type="body" style={{ fontWeight: "600", textAlign: "right" }} numberOfLines={1}>
+                {item.name}
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
+                {item.code} · {item.unit}
               </ThemedText>
             </View>
           </View>
@@ -151,9 +149,22 @@ export default function InventoryScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} />}
         ListHeaderComponent={
           <View style={styles.statsRow}>
-            <StatCard title={t("inventory")} value={drugs.length} icon="package" color={AuroraGradient.teal} />
-            <StatCard title={t("lowStock")} value={lowStockCount} icon="alert-circle" color={AuroraGradient.amber} />
-            <StatCard title={t("outOfStock")} value={outOfStockCount} icon="alert-triangle" color={AuroraGradient.rose} />
+            {summaryItems.map((s) => (
+              <View
+                key={s.label}
+                style={[styles.summaryCard, { backgroundColor: theme.backgroundDefault, borderColor: s.color + "30" }]}
+              >
+                <View style={[styles.summaryIcon, { backgroundColor: s.color + "18" }]}>
+                  <Feather name={s.icon} size={16} color={s.color} />
+                </View>
+                <ThemedText type="h4" style={{ color: theme.text, marginTop: Spacing.xs }}>
+                  {s.value.toLocaleString("fa-IR")}
+                </ThemedText>
+                <ThemedText type="small" numberOfLines={1} style={{ color: theme.textSecondary, textAlign: "center" }}>
+                  {s.label}
+                </ThemedText>
+              </View>
+            ))}
           </View>
         }
         ListEmptyComponent={
@@ -165,25 +176,17 @@ export default function InventoryScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
             <View style={styles.modalHeader}>
-              <ThemedText type="h4">{selectedDrug?.name}</ThemedText>
               <Pressable onPress={closeModal} hitSlop={12}>
                 <Feather name="x" size={24} color={theme.text} />
               </Pressable>
+              <ThemedText type="h4">{selectedDrug?.name}</ThemedText>
             </View>
 
-            <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>
+            <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.sm, textAlign: "right" }}>
               {t("currentStock")}: {(selectedDrug?.stockQuantity ?? 0).toLocaleString("fa-IR")} {selectedDrug?.unit}
             </ThemedText>
 
             <View style={styles.movementRow}>
-              <TextInput
-                value={movementAmount}
-                onChangeText={setMovementAmount}
-                keyboardType="numeric"
-                placeholder="تعداد"
-                placeholderTextColor={theme.textSecondary}
-                style={[styles.movementInput, { color: theme.text, borderColor: theme.glassBorder, backgroundColor: theme.backgroundSecondary }]}
-              />
               <Pressable
                 onPress={() => applyMovement(1)}
                 style={[styles.movementButton, { backgroundColor: theme.success + "20" }]}
@@ -196,26 +199,34 @@ export default function InventoryScreen() {
               >
                 <Feather name="minus" size={18} color={theme.error} />
               </Pressable>
+              <TextInput
+                value={movementAmount}
+                onChangeText={setMovementAmount}
+                keyboardType="numeric"
+                placeholder="تعداد"
+                placeholderTextColor={theme.textSecondary}
+                style={[styles.movementInput, { color: theme.text, borderColor: theme.glassBorder, backgroundColor: theme.backgroundSecondary }]}
+              />
             </View>
 
             <View style={styles.thresholdRow}>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
                 {t("lowStockThreshold")}
               </ThemedText>
               <View style={styles.movementRow}>
+                <Button size="small" onPress={saveThreshold} style={{ flex: 1 }}>
+                  {t("save")}
+                </Button>
                 <TextInput
                   value={thresholdValue}
                   onChangeText={setThresholdValue}
                   keyboardType="numeric"
                   style={[styles.movementInput, { color: theme.text, borderColor: theme.glassBorder, backgroundColor: theme.backgroundSecondary }]}
                 />
-                <Button size="small" onPress={saveThreshold} style={{ flex: 1 }}>
-                  {t("save")}
-                </Button>
               </View>
             </View>
 
-            <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.lg, marginBottom: Spacing.sm }}>
+            <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.lg, marginBottom: Spacing.sm, textAlign: "right" }}>
               {t("stockHistory")}
             </ThemedText>
             <FlatList
@@ -229,12 +240,12 @@ export default function InventoryScreen() {
               }
               renderItem={({ item }) => (
                 <View style={styles.historyRow}>
-                  <ThemedText type="small" style={{ color: item.quantity > 0 ? theme.success : theme.error }}>
-                    {item.quantity > 0 ? "+" : ""}
-                    {item.quantity.toLocaleString("fa-IR")}
-                  </ThemedText>
                   <ThemedText type="small" style={{ color: theme.textSecondary }}>
                     {new Date(item.createdAt).toLocaleDateString("fa-IR")}
+                  </ThemedText>
+                  <ThemedText type="small" style={{ color: item.quantity > 0 ? theme.success : theme.error, fontWeight: "600" }}>
+                    {item.quantity > 0 ? "+" : ""}
+                    {item.quantity.toLocaleString("fa-IR")}
                   </ThemedText>
                 </View>
               )}
@@ -257,12 +268,31 @@ const styles = StyleSheet.create({
   },
   menuButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   listContent: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md },
-  statsRow: { flexDirection: "row", gap: Spacing.sm, marginBottom: Spacing.lg },
+  statsRow: {
+    flexDirection: "row-reverse",
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  summaryCard: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+  },
+  summaryIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: BorderRadius.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   drugCard: { marginBottom: Spacing.sm },
-  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  rowBetween: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between", gap: Spacing.md },
   flexShrink: { flexShrink: 1 },
   stockBadge: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
@@ -276,8 +306,8 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     maxHeight: "80%",
   },
-  modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: Spacing.md },
-  movementRow: { flexDirection: "row", gap: Spacing.sm, alignItems: "center" },
+  modalHeader: { flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center", marginBottom: Spacing.md },
+  movementRow: { flexDirection: "row-reverse", gap: Spacing.sm, alignItems: "center" },
   movementInput: {
     flex: 1,
     height: 44,
@@ -295,7 +325,7 @@ const styles = StyleSheet.create({
   },
   thresholdRow: { marginTop: Spacing.lg },
   historyRow: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     justifyContent: "space-between",
     paddingVertical: Spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,

@@ -712,7 +712,7 @@ export default function ReportsScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.exportButton}
             >
-              <Feather name="file-text" size={18} color="#fff" style={{ marginLeft: 8 }} />
+              <Feather name="file-text" size={18} color="#fff" style={{ marginRight: 8 }} />
               <ThemedText style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
                 دریافت خروجی PDF
               </ThemedText>
@@ -841,7 +841,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   exportButton: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 16,

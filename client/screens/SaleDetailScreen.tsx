@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { View, StyleSheet, Alert, Pressable, Dimensions } from "react-native";
+import { View, StyleSheet, Alert, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
@@ -28,10 +28,6 @@ import dayjs from "dayjs";
 import jalaliday from "jalaliday";
 
 dayjs.extend(jalaliday);
-
-// Shift section headers slightly to the left (relative to screen width)
-// (Smaller absolute shift than before so headers sit a bit more to the right)
-const SECTION_HEADER_SHIFT_X = -Math.round(Dimensions.get("window").width * 0.03);
 
 export default function SaleDetailScreen() {
   const { theme, isDark } = useTheme();
@@ -437,7 +433,7 @@ export default function SaleDetailScreen() {
                         backgroundColor: selected ? theme.accentTertiary : "transparent",
                         alignItems: "center",
                         justifyContent: "center",
-                        marginLeft: Spacing.md,
+                        marginRight: Spacing.md,
                       }}
                     >
                       {selected ? <Feather name="check" size={14} color="#fff" /> : null}
@@ -886,8 +882,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginTop: Spacing["3xl"],
     marginBottom: Spacing.lg,
-    alignSelf: "flex-start",
-    transform: [{ translateX: SECTION_HEADER_SHIFT_X }],
+    alignSelf: "flex-end",
   },
   sectionHeaderIcon: {
     width: 30,
@@ -900,7 +895,7 @@ const styles = StyleSheet.create({
   sectionHeaderText: {
     fontWeight: "700",
     fontSize: 18,
-    textAlign: "left",
+    textAlign: "right",
   },
   centerBoxContent: {
     alignItems: "center",

@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
     fontSize: 15,
     flex: 1,
-    textAlign: "left",
+    textAlign: "right",
   },
   activeIndicator: {
     position: "absolute",

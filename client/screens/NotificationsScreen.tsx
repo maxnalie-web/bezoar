@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   menuButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   listContent: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md },
   card: { marginBottom: Spacing.sm },
-  row: { flexDirection: "row", alignItems: "center", gap: Spacing.md },
+  row: { flexDirection: "row-reverse", alignItems: "center", gap: Spacing.md },
   iconCircle: { width: 42, height: 42, borderRadius: BorderRadius.md, alignItems: "center", justifyContent: "center" },
   flexShrink: { flex: 1 },
   actionCol: { alignItems: "center" },
@@ -209,5 +209,5 @@ const styles = StyleSheet.create({
     borderTopRightRadius: BorderRadius.xl,
     padding: Spacing.lg,
   },
-  modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: Spacing.md },
+  modalHeader: { flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center", marginBottom: Spacing.md },
 });

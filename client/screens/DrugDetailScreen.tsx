@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
   },
   sectionHeaderRow: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     gap: Spacing.sm,
     marginBottom: Spacing.md,

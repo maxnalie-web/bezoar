@@ -283,7 +283,7 @@ function Section({ title, color, children }: { title: string; color: string; chi
         <ThemedText
           type="title"
           style={{
-            textAlign: "left",
+            textAlign: "right",
           }}
         >
           {title}
@@ -323,15 +323,15 @@ function ResultItem({
       >
         <Feather name={icon} size={18} color={color} />
       </LinearGradient>
-      <View style={{ flex: 1, marginLeft: Spacing.md }}>
-        <ThemedText type="body" style={{ textAlign: "left" }}>{title}</ThemedText>
+      <View style={{ flex: 1, marginRight: Spacing.md }}>
+        <ThemedText type="body" style={{ textAlign: "right" }}>{title}</ThemedText>
         {subtitle && (
-          <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "left" }}>
+          <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
             {subtitle}
           </ThemedText>
         )}
       </View>
-      <Feather name="chevron-right" size={18} color={theme.textSecondary} />
+      <Feather name="chevron-left" size={18} color={theme.textSecondary} />
     </Pressable>
   );
 }
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   searchBox: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingVertical: Spacing.sm,
-    textAlign: "left",
+    textAlign: "right",
   },
   chipsScroll: {
     marginBottom: Spacing.md,
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   chip: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     gap: Spacing.xs,
     borderWidth: 1,
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   resultItem: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     paddingVertical: Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,

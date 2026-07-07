@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
   },
   searchBox: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     gap: Spacing.sm,
     borderWidth: 1,
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xs,
   },
   sortChip: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     gap: Spacing.xs,
     borderWidth: 1,
@@ -685,7 +685,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   saleHeader: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     marginBottom: Spacing.md,
   },
@@ -725,10 +725,10 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   statusBadge: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     gap: Spacing.xs,
-    alignSelf: "flex-start",
+    alignSelf: "flex-end",
     paddingHorizontal: Spacing.sm,
     paddingVertical: 3,
     borderRadius: BorderRadius.xs,

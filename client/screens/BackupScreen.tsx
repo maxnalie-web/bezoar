@@ -163,10 +163,10 @@ export default function BackupScreen() {
                 <Feather name="upload-cloud" size={24} color={AuroraGradient.teal} />
               </LinearGradient>
               <View style={[styles.sectionInfo, styles.sectionInfoRTL]}>
-                <ThemedText type="h4" style={{ textAlign: "left" }}>
+                <ThemedText type="h4" style={{ textAlign: "right" }}>
                   {t("createBackup")}
                 </ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "left" }}>
+                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
                   {t("exportAllData")}
                 </ThemedText>
               </View>
@@ -194,10 +194,10 @@ export default function BackupScreen() {
                 <Feather name="download-cloud" size={24} color={AuroraGradient.violet} />
               </LinearGradient>
               <View style={[styles.sectionInfo, styles.sectionInfoRTL]}>
-                <ThemedText type="h4" style={{ textAlign: "left" }}>
+                <ThemedText type="h4" style={{ textAlign: "right" }}>
                   {t("restoreBackup")}
                 </ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "left" }}>
+                <ThemedText type="small" style={{ color: theme.textSecondary, textAlign: "right" }}>
                   {t("importFromBackup")}
                 </ThemedText>
               </View>
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   sectionHeaderRTL: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
   },
   iconContainer: {
     width: 48,
@@ -286,14 +286,14 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
   sectionInfoRTL: {
-    marginLeft: Spacing.md,
-    marginRight: 0,
+    marginLeft: 0,
+    marginRight: Spacing.md,
   },
   actionButton: {
     marginTop: Spacing.sm,
   },
   infoRow: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "flex-start",
   },
   infoIconBadge: {
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    marginLeft: Spacing.md,
-    textAlign: "left",
+    marginRight: Spacing.md,
+    textAlign: "right",
   },
 });

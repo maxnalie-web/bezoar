@@ -316,7 +316,6 @@ export default function DrugsScreen() {
                 {
                   backgroundColor: accent + "1f",
                   borderColor: accent + "40",
-                  alignSelf: "flex-start",
                 },
               ]}
             >
@@ -549,7 +548,7 @@ const styles = StyleSheet.create({
 
   searchBox: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     gap: Spacing.sm,
     borderWidth: 1,
@@ -585,7 +584,7 @@ const styles = StyleSheet.create({
   },
 
   sortChip: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     gap: Spacing.xs,
     borderWidth: 1,
@@ -607,7 +606,7 @@ const styles = StyleSheet.create({
   drugCard: { marginBottom: Spacing.md },
 
   drugHeader: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     marginBottom: Spacing.md,
   },
@@ -621,7 +620,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  drugInfo: { flex: 1, marginLeft: Spacing.lg },
+  drugInfo: { flex: 1, marginRight: Spacing.lg },
 
   drugName: { fontWeight: "700" },
 
@@ -631,7 +630,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: BorderRadius.sm,
-    marginLeft: Spacing.lg,
+    marginRight: Spacing.lg,
   },
 
   priceContainer: {
@@ -650,10 +649,10 @@ const styles = StyleSheet.create({
   },
 
   typeBadge: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
     gap: Spacing.xs,
-    alignSelf: "flex-start",
+    alignSelf: "flex-end",
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.full,
