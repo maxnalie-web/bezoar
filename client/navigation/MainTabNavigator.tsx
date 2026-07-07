@@ -9,8 +9,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { BorderRadius, Spacing, Elevation } from "@/constants/theme";
 
 import DashboardScreen from "@/screens/DashboardScreen";
-import PatientsScreen from "@/screens/PatientsScreen";
-import SalesScreen from "@/screens/SalesScreen";
+import PatientsStackNavigator from "@/navigation/PatientsStackNavigator";
+import SalesStackNavigator from "@/navigation/SalesStackNavigator";
 import ReportsScreen from "@/screens/ReportsScreen";
 import NotificationsScreen from "@/screens/NotificationsScreen";
 
@@ -30,14 +30,6 @@ const tabIcons: Record<keyof MainTabParamList, keyof typeof Feather.glyphMap> = 
   Sales: "shopping-bag",
   Reports: "bar-chart-2",
   Notifications: "bell",
-};
-
-const tabLabels: Record<keyof MainTabParamList, string> = {
-  Dashboard: "dashboard",
-  Patients: "patients",
-  Sales: "sales",
-  Reports: "reports",
-  Notifications: "notifications",
 };
 
 export default function MainTabNavigator() {
@@ -70,8 +62,8 @@ export default function MainTabNavigator() {
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarLabel: t("dashboard") }} />
-      <Tab.Screen name="Patients" component={PatientsScreen} options={{ tabBarLabel: t("patients") }} />
-      <Tab.Screen name="Sales" component={SalesScreen} options={{ tabBarLabel: t("sales") }} />
+      <Tab.Screen name="Patients" component={PatientsStackNavigator} options={{ tabBarLabel: t("patients") }} />
+      <Tab.Screen name="Sales" component={SalesStackNavigator} options={{ tabBarLabel: t("sales") }} />
       <Tab.Screen name="Reports" component={ReportsScreen} options={{ tabBarLabel: t("reports") }} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} options={{ tabBarLabel: t("notifications") }} />
     </Tab.Navigator>
