@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import DrawerNavigator from "@/navigation/DrawerNavigator";
-import PatientDetailScreen from "@/screens/PatientDetailScreen";
-import DrugDetailScreen from "@/screens/DrugDetailScreen";
-import SaleDetailScreen from "@/screens/SaleDetailScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import * as LocalAuthentication from "expo-local-authentication";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -11,9 +8,6 @@ import { View, Text, Button, StyleSheet, ActivityIndicator } from "react-native"
 
 export type RootStackParamList = {
   Main: undefined;
-  PatientDetail: { patientId?: string };
-  DrugDetail: { drugId?: string };
-  SaleDetail: { saleId?: string };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -104,27 +98,6 @@ export default function RootStackNavigator() {
         name="Main"
         component={DrawerNavigator}
         options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="PatientDetail"
-        component={PatientDetailScreen}
-        options={{
-          headerTitle: "Patient Details",
-        }}
-      />
-      <Stack.Screen
-        name="DrugDetail"
-        component={DrugDetailScreen}
-        options={{
-          headerTitle: "Drug Details",
-        }}
-      />
-      <Stack.Screen
-        name="SaleDetail"
-        component={SaleDetailScreen}
-        options={{
-          headerTitle: "Sale Details",
-        }}
       />
     </Stack.Navigator>
   );
