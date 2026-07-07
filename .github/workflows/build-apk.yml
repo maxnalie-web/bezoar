@@ -1,5 +1,4 @@
-# trigger build
-name: Build Android APK (EAS Cloud)
+name: Build Bezoar APK
 
 on:
   push:
@@ -10,25 +9,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
           cache: npm
-          cache-dependency-path: client/package-lock.json
-
-      - name: Setup EAS CLI
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
         run: npm ci
-        working-directory: client
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli@latest
 
       - name: Build APK via EAS Cloud
         run: |
@@ -37,7 +29,6 @@ jobs:
             --profile preview \
             --non-interactive \
             --wait
-        working-directory: client
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
@@ -56,30 +47,29 @@ if builds:
     url = builds[0].get('artifacts', {}).get('buildUrl', '')
     if url:
         urllib.request.urlretrieve(url, 'bezoar.apk')
-        print('Downloaded:', url[:80])
+        print('Downloaded APK')
     else:
-        print('No buildUrl found')
-        print(json.dumps(builds[0], indent=2))
+        print('No buildUrl:', json.dumps(builds[0].get('artifacts'), indent=2))
+else:
+    print('No builds found')
 "
-        working-directory: client
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: bezoar-apk-${{ github.run_number }}
-          path: client/bezoar.apk
+          path: bezoar.apk
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish sideloadable APK release
+      - name: Publish release
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest-apk --yes 2>/dev/null || true
-          gh release create latest-apk client/bezoar.apk \
+          gh release create latest-apk bezoar.apk \
             --title "Bezoar (latest Android build)" \
-            --notes "Auto-built via EAS. Download bezoar.apk and install directly on Android." \
+            --notes "Built via EAS Cloud. Download bezoar.apk and install directly on Android." \
             --prerelease
