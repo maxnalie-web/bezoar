@@ -21,7 +21,7 @@ import AppLogo from "@assets/images/logo.png";
 
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import SearchScreen from "@/screens/SearchScreen";
-import DrugsScreen from "@/screens/DrugsScreen";
+import DrugsStackNavigator from "@/navigation/DrugsStackNavigator";
 import Inventory from "@/screens/InventoryScreen";
 import BackupScreen from "@/screens/BackupScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
@@ -166,7 +166,7 @@ export default function DrawerNavigator() {
     >
       <Drawer.Screen name="MainTabs" component={MainTabNavigator} />
       <Drawer.Screen name="Search" component={SearchScreen} />
-      <Drawer.Screen name="Drugs" component={DrugsScreen} />
+      <Drawer.Screen name="Drugs" component={DrugsStackNavigator} />
       <Drawer.Screen name="Inventory" component={Inventory} />
       <Drawer.Screen name="Backup" component={BackupScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
