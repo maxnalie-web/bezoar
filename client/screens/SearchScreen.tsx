@@ -210,7 +210,10 @@ export default function SearchScreen() {
                 title={`${p.firstName} ${p.lastName}`}
                 subtitle={p.phone}
                 onPress={() =>
-                  (navigation as any).navigate("PatientDetail", { patientId: p.id })
+                  (navigation as any).navigate("MainTabs", {
+                    screen: "Patients",
+                    params: { screen: "PatientDetail", params: { patientId: p.id } },
+                  })
                 }
               />
             ))}
@@ -228,7 +231,10 @@ export default function SearchScreen() {
                 title={`${s.bottleCount} بطری`}
                 subtitle={s.isGift ? "هدیه" : `${s.totalPrice.toLocaleString("fa-IR")} تومان`}
                 onPress={() =>
-                  (navigation as any).navigate("SaleDetail", { saleId: s.id })
+                  (navigation as any).navigate("MainTabs", {
+                    screen: "Sales",
+                    params: { screen: "SaleDetail", params: { saleId: s.id } },
+                  })
                 }
               />
             ))}
@@ -246,7 +252,10 @@ export default function SearchScreen() {
                 title={d.name}
                 subtitle={`${d.salePrice.toLocaleString("fa-IR")} تومان`}
                 onPress={() =>
-                  (navigation as any).navigate("DrugDetail", { drugId: d.id })
+                  (navigation as any).navigate("Drugs", {
+                    screen: "DrugDetail",
+                    params: { drugId: d.id },
+                  })
                 }
               />
             ))}
